@@ -1,0 +1,11 @@
+# Mac crap
+.DS_Store
+
+#vscode
+.vscode/
+.vs/
+.idea/
+
+#build
+Debug/
+x64/
