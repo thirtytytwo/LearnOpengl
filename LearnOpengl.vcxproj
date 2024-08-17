@@ -143,15 +143,18 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="src\glad.c" />
-    <ClCompile Include="src\Test.cpp" />
+    <ClCompile Include="src\main.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\Shader.h" />
     <ClInclude Include="utility\glad\include\glad\glad.h" />
     <ClInclude Include="utility\glad\include\KHR\khrplatform.h" />
     <ClInclude Include="utility\glfw\include\glfw3.h" />
     <ClInclude Include="utility\glfw\include\glfw3native.h" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="Shader\Lit\LitFragment.glsl" />
+    <Content Include="Shader\Lit\LitVertex.glsl" />
     <Content Include="utility\glfw\lib\glfw3.lib" />
     <Content Include="utility\glfw\lib\glfw3.pdb" />
   </ItemGroup>
