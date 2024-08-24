@@ -1,17 +1,20 @@
 ﻿#ifndef SHADER_H
 #define SHADER_H
 
-#include <glad/glad.h>; // 包含glad来获取所有的必须OpenGL头文件
-
+#include <glad/glad.h>;
 #include <string>
 #include <fstream>
 #include <sstream>
 #include <iostream>
 
+#include "Camera.h"
+
 
 const std::string vertexPath = "Shader/";
 const std::string fragmentPath = "Shader/";
 const std::string shaderSuffix = ".glsl";
+
+const std::string keyVPMatrix = "_VPMatrix";
 class Shader
 {
 public:
@@ -70,16 +73,31 @@ public:
         glDeleteShader(vertex);
         glDeleteShader(fragment);
     }
-    // 使用/激活程序
+    // 使用激活程序
     void use()
     {
         glUseProgram(ID);
     }
+    //场景数据相关
+    void SetCameraProps(Camera camera) 
+    {
+        setMat4(keyVPMatrix, camera.GetVPMatrix());
+    }
+    void SetLight() 
+    {
+
+    }
     // uniform工具函数
     void setBool(const std::string &name, bool value) const;  
-    void setInt(const std::string &name, int value) const;   
+    void setInt(const std::string& name, int value) const 
+    {
+		glUniform1i(glGetUniformLocation(ID, name.c_str()), value);
+    }
     void setFloat(const std::string &name, float value) const;
-
+	void setMat4(const std::string& name, glm::mat4x4 mat) const
+	{
+		glUniformMatrix4fv(glGetUniformLocation(ID, name.c_str()), 1, GL_FALSE, &mat[0][0]);
+	}
 private:
     // utility function for checking shader compilation/linking errors.
     // ------------------------------------------------------------------------
