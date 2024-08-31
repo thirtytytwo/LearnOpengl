@@ -1,13 +1,14 @@
 ﻿#ifndef SHADER_H
 #define SHADER_H
 
-#include <glad/glad.h>;
+#include <glad/glad.h>
 #include <string>
 #include <fstream>
 #include <sstream>
 #include <iostream>
 
 #include "Camera.h"
+#include "Light.h"
 
 
 const std::string vertexPath = "Shader/";
@@ -22,9 +23,26 @@ public:
     unsigned int ID;
     
     // 构造器读取并构建着色器
-    Shader(std::string shaderName)
-    {
-        std::string vertexCode;
+    Shader(std::string shaderName);
+    // 使用激活程序
+    void use();
+    //场景数据相关
+    void SetCameraProps(Camera camera);
+    void SetLight(Light light);
+    // uniform工具函数
+    void setBool(const std::string &name, bool value) const;  
+    void setInt(const std::string& name, int value) const;
+    void setFloat(const std::string &name, float value) const;
+	void setMat4(const std::string& name, mat4x4 mat) const;
+private:
+    // utility function for checking shader compilation/linking errors.
+    // ------------------------------------------------------------------------
+    void checkCompileErrors(unsigned int shader, std::string type);
+};
+
+inline Shader::Shader(std::string shaderName)
+{
+    std::string vertexCode;
         std::string fragmentCode;
         std::ifstream vShaderFile;
         std::ifstream fShaderFile;
@@ -72,58 +90,56 @@ public:
         // delete the shaders as they're linked into our program now and no longer necessary
         glDeleteShader(vertex);
         glDeleteShader(fragment);
-    }
-    // 使用激活程序
-    void use()
-    {
-        glUseProgram(ID);
-    }
-    //场景数据相关
-    void SetCameraProps(Camera camera) 
-    {
-        setMat4(keyVPMatrix, camera.GetVPMatrix());
-    }
-    void SetLight() 
-    {
+}
+inline void Shader::use()
+{
+    glUseProgram(ID);
+}
 
-    }
-    // uniform工具函数
-    void setBool(const std::string &name, bool value) const;  
-    void setInt(const std::string& name, int value) const 
+inline void Shader::SetCameraProps(Camera camera) 
+{
+    setMat4(keyVPMatrix, camera.GetVPMatrix());
+}
+inline void Shader::SetLight(Light light)
+{
+    glUniform3f(glGetUniformLocation(ID, "_LightPosition"), light.position.x, light.position.y, light.position.z);
+    glUniform3f(glGetUniformLocation(ID, "_LightColor"), light.color.x, light.color.y, light.color.z);
+    glUniform3f(glGetUniformLocation(ID, "_LightDirection"), light.direction.x, light.direction.y, light.direction.z);
+}
+
+
+inline void Shader::setInt(const std::string& name, int value) const
+{
+    glUniform1i(glGetUniformLocation(ID, name.c_str()), value);
+}
+inline void Shader::setMat4(const std::string& name, mat4x4 mat) const
+{
+    glUniformMatrix4fv(glGetUniformLocation(ID, name.c_str()), 1, GL_FALSE, &mat[0][0]);
+}
+
+
+inline void Shader::checkCompileErrors(unsigned int shader, std::string type)
+{
+    int success;
+    char infoLog[1024];
+    if (type != "PROGRAM")
     {
-		glUniform1i(glGetUniformLocation(ID, name.c_str()), value);
-    }
-    void setFloat(const std::string &name, float value) const;
-	void setMat4(const std::string& name, glm::mat4x4 mat) const
-	{
-		glUniformMatrix4fv(glGetUniformLocation(ID, name.c_str()), 1, GL_FALSE, &mat[0][0]);
-	}
-private:
-    // utility function for checking shader compilation/linking errors.
-    // ------------------------------------------------------------------------
-    void checkCompileErrors(unsigned int shader, std::string type)
-    {
-        int success;
-        char infoLog[1024];
-        if (type != "PROGRAM")
+        glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
+        if (!success)
         {
-            glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
-            if (!success)
-            {
-                glGetShaderInfoLog(shader, 1024, NULL, infoLog);
-                std::cout << "ERROR::SHADER_COMPILATION_ERROR of type: " << type << "\n" << infoLog << "\n -- --------------------------------------------------- -- " << std::endl;
-            }
-        }
-        else
-        {
-            glGetProgramiv(shader, GL_LINK_STATUS, &success);
-            if (!success)
-            {
-                glGetProgramInfoLog(shader, 1024, NULL, infoLog);
-                std::cout << "ERROR::PROGRAM_LINKING_ERROR of type: " << type << "\n" << infoLog << "\n -- --------------------------------------------------- -- " << std::endl;
-            }
+            glGetShaderInfoLog(shader, 1024, NULL, infoLog);
+            std::cout << "ERROR::SHADER_COMPILATION_ERROR of type: " << type << "\n" << infoLog << "\n -- --------------------------------------------------- -- " << std::endl;
         }
     }
-};
+    else
+    {
+        glGetProgramiv(shader, GL_LINK_STATUS, &success);
+        if (!success)
+        {
+            glGetProgramInfoLog(shader, 1024, NULL, infoLog);
+            std::cout << "ERROR::PROGRAM_LINKING_ERROR of type: " << type << "\n" << infoLog << "\n -- --------------------------------------------------- -- " << std::endl;
+        }
+    }
+}
 
 #endif
