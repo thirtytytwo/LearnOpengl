@@ -1,5 +1,7 @@
 ﻿#version 330 core
 
+#include "ShaderLibrary/Common.glsl"
+
 in vec2 UV;
 in vec3 NORMAL;
 
@@ -13,9 +15,8 @@ out vec4 FragColor;
 
 void main()
 {
-    float NdotL = max(dot(NORMAL, _LightDirection), 0.0);
+    float NdotL = dot(NORMAL, _LightDirection) * 0.5 + 0.5;
     vec3 diffuse = _LightColor * NdotL;
     vec3 baseColor = texture(_MainTex, UV).rgb;
     FragColor = vec4(baseColor * diffuse, 1.0);
-    //FragColor = vec4(baseColor, 1.0);
 }

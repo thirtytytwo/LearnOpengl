@@ -6,6 +6,7 @@
 #include <fstream>
 #include <sstream>
 #include <iostream>
+#include <regex>
 
 #include "Camera.h"
 #include "Light.h"
@@ -38,6 +39,7 @@ private:
     // utility function for checking shader compilation/linking errors.
     // ------------------------------------------------------------------------
     void checkCompileErrors(unsigned int shader, std::string type);
+    void SearchIncludeFiles(std::string& shaderCode);
 };
 
 inline Shader::Shader(std::string shaderName)
@@ -67,6 +69,8 @@ inline Shader::Shader(std::string shaderName)
         {
             std::cout << "ERROR::SHADER::FILE_NOT_SUCCESFULLY_READ" << std::endl;
         }
+        SearchIncludeFiles(vertexCode);
+        SearchIncludeFiles(fragmentCode);
         const char* vShaderCode = vertexCode.c_str();
         const char* fShaderCode = fragmentCode.c_str();
 
@@ -139,6 +143,32 @@ inline void Shader::checkCompileErrors(unsigned int shader, std::string type)
             glGetProgramInfoLog(shader, 1024, NULL, infoLog);
             std::cout << "ERROR::PROGRAM_LINKING_ERROR of type: " << type << "\n" << infoLog << "\n -- --------------------------------------------------- -- " << std::endl;
         }
+    }
+}
+inline void Shader::SearchIncludeFiles(std::string& shaderCode)
+{
+    std::regex regex(R"(#include\s+\"(.*)\")");
+    std::smatch match;
+    std::string::const_iterator start = shaderCode.cbegin();
+    std::string::const_iterator end = shaderCode.cend();
+    std::ifstream includeFile;
+    std::stringstream shadersStream;
+    while(std::regex_search(start, end, match, regex))
+    {
+        includeFile.open(match[1]);
+
+        if(!includeFile.is_open())
+        {
+            std::cout << "ERROR::SHADER::FILE_NOT_SUCCESFULLY_READ" << std::endl;
+            return;
+        }
+        shadersStream.str("");
+        shadersStream.clear();
+        shadersStream << includeFile.rdbuf();
+        shaderCode.replace(match.position(0), match.length(0), shadersStream.str());
+        start = shaderCode.cbegin() + match.position(0) + shadersStream.str().length();
+        end = shaderCode.cend();
+        includeFile.close();
     }
 }
 
