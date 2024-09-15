@@ -11,7 +11,9 @@ public:
 
 	void SetPosition(vec3 position) { this->position = position; }
 	void SetRotation(vec3 rotation) { this->rotation = rotation; }
-	mat4x4 GetVPMatrix();
+	mat4x4 GetViewMatrix();
+	mat4x4 GetProjectionMatrix();
+	vec3   GetPosition();
 
 private:
 	vec3 position     = vec3(0.0f);
@@ -22,7 +24,7 @@ private:
 	float32 farPlane  = 0.0f; 
 };
 
-Camera::Camera(float32 fov, float32 aspect, float32 nearPlane, float32 farPlane)
+inline Camera::Camera(float32 fov, float32 aspect, float32 nearPlane, float32 farPlane)
 {
 	this->fov = fov;
 	this->aspect = aspect;
@@ -30,19 +32,29 @@ Camera::Camera(float32 fov, float32 aspect, float32 nearPlane, float32 farPlane)
 	this->farPlane = farPlane;
 }
 
-Camera::~Camera()
+inline Camera::~Camera()
 {
 
 }
 
-mat4x4 Camera::GetVPMatrix()
+inline mat4x4 Camera::GetViewMatrix()
 {
 	mat4x4 view = mat4x4(1.0f);
 	view = translate(view, -position);
 	view = rotate(view, radians(rotation.x), vec3(1.0f, 0.0f, 0.0f));
 	view = rotate(view, radians(rotation.y), vec3(0.0f, 1.0f, 0.0f));
 	view = rotate(view, radians(rotation.z), vec3(0.0f, 0.0f, 1.0f));
+	return view;
+}
+inline mat4x4 Camera::GetProjectionMatrix()
+{
 	mat4x4 projection = mat4x4(1.0f);
 	projection = perspective(radians(fov), aspect, nearPlane, farPlane);
-	return projection * view;
+	return projection;
 }
+
+inline vec3 Camera::GetPosition()
+{
+	return this->position;
+}
+

@@ -16,7 +16,9 @@ const std::string vertexPath = "Shader/";
 const std::string fragmentPath = "Shader/";
 const std::string shaderSuffix = ".glsl";
 
-const std::string keyVPMatrix = "_VPMatrix";
+const std::string keyViewMatrix = "ViewMatrix";
+const std::string keyProjectionMatrix = "ProjectionMatrix";
+const std::string keyCameraPosition = "CameraPosition";
 class Shader
 {
 public:
@@ -31,10 +33,11 @@ public:
     void SetCameraProps(Camera camera);
     void SetLight(Light light);
     // uniform工具函数
-    void setBool(const std::string &name, bool value) const;  
-    void setInt(const std::string& name, int value) const;
-    void setFloat(const std::string &name, float value) const;
-	void setMat4(const std::string& name, mat4x4 mat) const;
+    void SetBool(const std::string &name, bool value) const;  
+    void SetInt(const std::string& name, int value) const;
+    void SetFloat(const std::string &name, float value) const;
+	void SetMat4(const std::string& name, mat4x4 value) const;
+    void SetVec3(const std::string &name, vec3 value) const;
 private:
     // utility function for checking shader compilation/linking errors.
     // ------------------------------------------------------------------------
@@ -102,24 +105,31 @@ inline void Shader::use()
 
 inline void Shader::SetCameraProps(Camera camera) 
 {
-    setMat4(keyVPMatrix, camera.GetVPMatrix());
+    SetMat4(keyViewMatrix, camera.GetViewMatrix());
+    SetMat4(keyProjectionMatrix, camera.GetProjectionMatrix());
+    SetVec3(keyCameraPosition, camera.GetPosition());
 }
 inline void Shader::SetLight(Light light)
 {
-    glUniform3f(glGetUniformLocation(ID, "_LightPosition"), light.position.x, light.position.y, light.position.z);
-    glUniform3f(glGetUniformLocation(ID, "_LightColor"), light.color.x, light.color.y, light.color.z);
-    glUniform3f(glGetUniformLocation(ID, "_LightDirection"), light.direction.x, light.direction.y, light.direction.z);
+    SetVec3("mainLight.position", light.position);
+    SetVec3("mainLight.color", light.color);
+    SetVec3("mainLight.direction", light.direction);
 }
 
 
-inline void Shader::setInt(const std::string& name, int value) const
+inline void Shader::SetInt(const std::string& name, int value) const
 {
     glUniform1i(glGetUniformLocation(ID, name.c_str()), value);
 }
-inline void Shader::setMat4(const std::string& name, mat4x4 mat) const
+inline void Shader::SetMat4(const std::string& name, mat4x4 value) const
 {
-    glUniformMatrix4fv(glGetUniformLocation(ID, name.c_str()), 1, GL_FALSE, &mat[0][0]);
+    glUniformMatrix4fv(glGetUniformLocation(ID, name.c_str()), 1, GL_FALSE, &value[0][0]);
 }
+inline void Shader::SetVec3(const std::string& name, vec3 value) const
+{
+    glUniform3f(glGetUniformLocation(ID, name.c_str()), value.x, value.y, value.z);
+}
+
 
 
 inline void Shader::checkCompileErrors(unsigned int shader, std::string type)

@@ -117,7 +117,7 @@ int main()
     glBindVertexArray(0);
 
     //绑定采样器,这里应该是材质级的绑定，如果是全局应该在生命周期循环中绑定
-	shader.setInt("_MainTex", 0);
+	shader.SetInt("_MainTex", 0);
     
     while (!glfwWindowShouldClose(window))
     {
