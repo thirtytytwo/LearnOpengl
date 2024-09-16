@@ -1,19 +1,21 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
-const std::string texturePath = "Textures/";
+const std::string texturePath = "Assets/Textures/";
+
+
 class Texture
 {
 public:
 	unsigned int ID;
 	
-	Texture(std::string textureName);
+	Texture(const std::string& texturePath);
 	
 	void Active(GLenum textureLocation);
 	~Texture();
 };
 
-inline Texture::Texture(std::string textureName)
+inline Texture::Texture(const std::string& texturePath)
 {
 	glGenTextures(1, &ID);
 	glBindTexture(GL_TEXTURE_2D, ID);
@@ -25,11 +27,9 @@ inline Texture::Texture(std::string textureName)
 	//读取图片
 	stbi_set_flip_vertically_on_load(true);
 	int width, height, nrChannels;
-	std::string path = (texturePath + textureName + ".jpg");
-	unsigned char* data = stbi_load(path.c_str(), &width, &height, &nrChannels, 0);
+	unsigned char* data = stbi_load(texturePath.c_str(), &width, &height, &nrChannels, 0);
 	if (data)
 	{
-		//????????png????????????4
 		if (nrChannels == 3)
 		{
 			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);

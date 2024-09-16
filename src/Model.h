@@ -7,28 +7,31 @@
 #include "Mesh.h"
 #include "Material.h"
 
+const string modelPath = "resources/objects/nanosuit/nanosuit.obj";
 class Model
 {
 public:
-    Model(const char* path, string _shader = "Lit");
+    Model(string modelName, string shaderName = "Lit");
     ~Model(){}
-    
+
+    void PreRender();
     void Render();
 private:
     vector<Material> materials;
     vector<Mesh> meshes;
-    string shader;
-    string directory;
-
+    string shaderName;
+    
     void LoadModel(const char* path);
     void ProcessNode(aiNode* node, const aiScene* scene);
     void ProcessMesh(aiMesh* mesh, const aiScene* scene);
+    vector<Texture> LoadMaterialTextures(aiMaterial* mat, aiTextureType type);
 };
 
-inline Model::Model(const char* path, string _shader)
+inline Model::Model(string modelName, string shaderName)
 {
-    LoadModel(path);
-    this->shader = std::move(_shader);
+    string path = modelPath + modelName;
+    LoadModel(path.c_str());
+    this->shaderName = std::move(shaderName);
 }
 
 inline void Model::LoadModel(const char* path)
@@ -41,7 +44,6 @@ inline void Model::LoadModel(const char* path)
         cout << "ERROR::ASSIMP:: " << importer.GetErrorString() << endl;
         return;
     }
-    directory = string(path).substr(0, string(path).find_last_of('/'));
     ProcessNode(scene->mRootNode, scene);
 }
 
@@ -127,14 +129,34 @@ inline void Model::ProcessMesh(aiMesh* mesh, const aiScene* scene)
             indices.push_back(face.mIndices[j]);
         }
     }
-    //材质
+
+    //图片信息
     aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
+    vector<Texture> diffuseMaps = LoadMaterialTextures(material, aiTextureType_DIFFUSE);
+    textures.insert(textures.end(), diffuseMaps.begin(), diffuseMaps.end());
+    vector<Texture> normalMaps = LoadMaterialTextures(material, aiTextureType_HEIGHT);
+    textures.insert(textures.end(), normalMaps.begin(), normalMaps.end());
     
-    Material mat(material, directory, shader);
-    materials.push_back(mat);
+    materials.emplace_back(textures, shaderName);
     meshes.emplace_back(vertices, indices);
     
 }
+
+inline vector<Texture> Model::LoadMaterialTextures(aiMaterial* mat, aiTextureType type)
+{
+    vector<Texture> textures;
+    for(unsigned int i = 0; i < mat->GetTextureCount(type); i++)
+    {
+        aiString str;
+        mat->GetTexture(type, i, &str);
+        string fileName = str.C_Str();
+        Texture texture(texturePath + fileName);
+        textures.push_back(texture);
+       
+    }
+    return textures;
+}
+
 
 
 

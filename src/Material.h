@@ -1,45 +1,33 @@
 #pragma once
-#include <utility>
 
+#include <filesystem>
+#include <string>
 #include "Shader.h"
 #include "Texture.h"
 
 using namespace std;
+
 class Material
 {
 public:
-    Material(aiMaterial * material = nullptr, string directory = "", string shaderName = "");
-    ~Material();
-
-    void LoadTextures(aiMaterial * material, aiTextureType type, string typeName, string directory);
-    void SetShader(string name);
+    Material(string shaderName = "");
+    
 private:
     vector<Texture> textures;
-    Shader shader;
-    string directory;
+    Shader  shader;
 };
 
-inline Material::Material(aiMaterial * material, string directory, string shaderName)
+inline Material::Material(vector<Texture> textures, string shaderName)
 {
-    this->directory = directory;
     this->shader = Shader(std::move(shaderName));
-    if (material)
-    {
-        LoadTextures(material, aiTextureType_DIFFUSE, "texture_diffuse", directory);
-        LoadTextures(material, aiTextureType_SPECULAR, "texture_specular", directory);
-        LoadTextures(material, aiTextureType_NORMALS, "texture_normal", directory);
-        LoadTextures(material, aiTextureType_HEIGHT, "texture_height", directory);
-    }
+    this->textures = std::move(textures);
+
+    //TODO:后续加入别的贴图类别
+    this->textures[0].Active(GL_TEXTURE0);
+    this->textures[1].Active(GL_TEXTURE1);
+
+    shader.SetInt("_MainTex", 0);
+    shader.SetInt("_NormalTex", 1);
 }
 
-//TODO:完成这个函数
-inline void Material::LoadTextures(aiMaterial * material, aiTextureType type, string typeName, string directory)
-{
-    for (unsigned int i = 0; i < material->GetTextureCount(type); i++)
-    {
-        aiString str;
-        material->GetTexture(type, i, &str);
-        string path = directory + "/" + str.C_Str();
-        textures.push_back(Texture(path.c_str(), typeName));
-    }
-}
+
