@@ -1,3 +1,5 @@
+#pragma once
+
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
@@ -9,13 +11,13 @@ class Texture
 public:
 	unsigned int ID;
 	
-	Texture(const std::string& texturePath);
+	Texture(const std::string& path);
 	
 	void Active(GLenum textureLocation);
 	~Texture();
 };
 
-inline Texture::Texture(const std::string& texturePath)
+inline Texture::Texture(const std::string& path)
 {
 	glGenTextures(1, &ID);
 	glBindTexture(GL_TEXTURE_2D, ID);
@@ -27,7 +29,7 @@ inline Texture::Texture(const std::string& texturePath)
 	//读取图片
 	stbi_set_flip_vertically_on_load(true);
 	int width, height, nrChannels;
-	unsigned char* data = stbi_load(texturePath.c_str(), &width, &height, &nrChannels, 0);
+	unsigned char* data = stbi_load(path.c_str(), &width, &height, &nrChannels, 0);
 	if (data)
 	{
 		if (nrChannels == 3)

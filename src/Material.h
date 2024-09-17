@@ -2,6 +2,7 @@
 
 #include <filesystem>
 #include <string>
+#include <utility>
 #include "Shader.h"
 #include "Texture.h"
 
@@ -10,16 +11,16 @@ using namespace std;
 class Material
 {
 public:
-    Material(string shaderName = "");
-    
+    Material(vector<Texture> textures, string shaderName = "");
+
+    void Render(Camera  &camera, Light &light, mat4 worldMatrix);
 private:
     vector<Texture> textures;
-    Shader  shader;
+    Shader shader;
 };
 
-inline Material::Material(vector<Texture> textures, string shaderName)
+inline Material::Material(vector<Texture> textures, string shaderName):shader(Shader(std::move(shaderName)))
 {
-    this->shader = Shader(std::move(shaderName));
     this->textures = std::move(textures);
 
     //TODO:后续加入别的贴图类别
@@ -28,6 +29,14 @@ inline Material::Material(vector<Texture> textures, string shaderName)
 
     shader.SetInt("_MainTex", 0);
     shader.SetInt("_NormalTex", 1);
+}
+
+inline void Material::Render(Camera  &camera, Light &light, mat4 worldMatrix)
+{
+    shader.use();
+    shader.SetMat4(keyWorldMatrix, worldMatrix);
+    shader.SetCameraProps(camera);
+    shader.SetLight(light);
 }
 
 

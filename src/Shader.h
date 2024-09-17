@@ -16,6 +16,7 @@ const std::string vertexPath = "Shader/";
 const std::string fragmentPath = "Shader/";
 const std::string shaderSuffix = ".glsl";
 
+const std::string keyWorldMatrix = "WorldMatrix";
 const std::string keyViewMatrix = "ViewMatrix";
 const std::string keyProjectionMatrix = "ProjectionMatrix";
 const std::string keyCameraPosition = "CameraPosition";

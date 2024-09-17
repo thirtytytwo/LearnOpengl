@@ -15,7 +15,7 @@ vec3 TransformObjectToWorld(vec3 positionOS)
 }
 vec4 TransformObjectToHClip(vec4 positionOS)
 {
-    vec4 result = ProjectionMatrix * ViewMatrix * positionOS;
+    vec4 result = ProjectionMatrix * ViewMatrix * WorldMatrix * positionOS;
     return result;
 }
 #endif

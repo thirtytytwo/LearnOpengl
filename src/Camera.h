@@ -6,7 +6,7 @@ using namespace glm;
 class Camera
 {
 public:
-	Camera(float32 fov = 90.0f, float32 aspect = 16/9, float32 nearPlane = 0.0001f, float32 farPlane = 1000.0f);
+	Camera(float32 fov = 120.0f, float32 aspect = 16/9, float32 nearPlane = 0.001f, float32 farPlane = 1000.0f);
 	~Camera();
 
 	void SetPosition(vec3 position) { this->position = position; }

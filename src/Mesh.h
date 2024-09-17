@@ -25,10 +25,12 @@ public:
     Mesh(vector<Vertex> vertices, vector<unsigned int> indices);
     ~Mesh();
 
+    unsigned int GetIndicesNum();
+    unsigned int VAO;
 private:
     vector<Vertex> vertices;
     vector<unsigned int> indices;
-    unsigned int VAO, VBO, EBO;
+    unsigned int VBO, EBO;
     void SetupMesh();
 };
 
@@ -87,6 +89,11 @@ inline void Mesh::SetupMesh()
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
+}
+
+inline unsigned int Mesh::GetIndicesNum()
+{
+    return static_cast<unsigned int> (indices.size());
 }
 
 

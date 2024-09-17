@@ -7,19 +7,20 @@
 #include "Mesh.h"
 #include "Material.h"
 
-const string modelPath = "resources/objects/nanosuit/nanosuit.obj";
+const string modelPath = "Assets/Meshes/";
 class Model
 {
 public:
     Model(string modelName, string shaderName = "Lit");
     ~Model(){}
 
-    void PreRender();
-    void Render();
+    void Render(Camera& camera, Light& light, mat4 &&modelMatrix);
+
 private:
     vector<Material> materials;
     vector<Mesh> meshes;
     string shaderName;
+    string modelName;
     
     void LoadModel(const char* path);
     void ProcessNode(aiNode* node, const aiScene* scene);
@@ -29,9 +30,10 @@ private:
 
 inline Model::Model(string modelName, string shaderName)
 {
-    string path = modelPath + modelName;
-    LoadModel(path.c_str());
+    string path = modelPath + modelName + "/" + modelName + ".obj";
     this->shaderName = std::move(shaderName);
+    this->modelName = std::move(modelName);
+    LoadModel(path.c_str());
 }
 
 inline void Model::LoadModel(const char* path)
@@ -150,13 +152,22 @@ inline vector<Texture> Model::LoadMaterialTextures(aiMaterial* mat, aiTextureTyp
         aiString str;
         mat->GetTexture(type, i, &str);
         string fileName = str.C_Str();
-        Texture texture(texturePath + fileName);
+        Texture texture(texturePath + modelName + "/" + fileName);
         textures.push_back(texture);
        
     }
     return textures;
 }
 
+inline void Model::Render(Camera &camera, Light &light, mat4 &&worldMatrix)
+{
+    for (int i = 0; i < meshes.size(); i++)
+    {
+        materials[i].Render(camera, light, worldMatrix);
+        glBindVertexArray(meshes[i].VAO);
+        glDrawElements(GL_TRIANGLES, meshes[i].GetIndicesNum(), GL_UNSIGNED_INT, 0);
+    }
+}
 
 
 
