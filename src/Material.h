@@ -25,16 +25,17 @@ inline Material::Material(vector<Texture> textures, string shaderName):shader(Sh
 
     //TODO:后续加入别的贴图类别
     this->textures[0].Active(GL_TEXTURE0);
-    this->textures[1].Active(GL_TEXTURE1);
-
     shader.SetInt("_MainTex", 0);
+    this->textures[0].Bind();
+    this->textures[1].Active(GL_TEXTURE1);
     shader.SetInt("_NormalTex", 1);
+    this->textures[1].Bind();
 }
 
 inline void Material::Render(Camera  &camera, Light &light, mat4 worldMatrix)
 {
     shader.use();
-    shader.SetMat4(keyWorldMatrix, worldMatrix);
+    shader.SetWolrd(worldMatrix);
     shader.SetCameraProps(camera);
     shader.SetLight(light);
 }

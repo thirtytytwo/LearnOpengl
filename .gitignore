@@ -9,6 +9,5 @@
 #build
 Debug/
 x64/
-LearnOpengl.vcxproj
 LearnOpengl.vcxproj.filters
 LearnOpengl.vcxproj.user

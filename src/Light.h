@@ -21,7 +21,7 @@ public:
     vec3 direction;
     vec3 color;
 
-    Light(LightType type = DIRECTIONAL, vec3 position = vec3(100), vec3 direction = vec3(0,1, 0), vec3 color = vec3(1));
+    Light(LightType type = DIRECTIONAL, vec3 position = vec3(100), vec3 direction = vec3(-1), vec3 color = vec3(1));
     ~Light();
 
     void Transform(float x, float y , float z);

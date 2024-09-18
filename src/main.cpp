@@ -35,7 +35,7 @@ int main()
 	Camera camera = Camera();
     Light light = Light();
     GameObject testObject = GameObject(vec3(0.f), vec3(0.0f), vec3(0.5f), "nanosuit");
-	camera.SetPosition(glm::vec3(0.0f, 1.0f, 3.0f));
+	camera.SetPosition(glm::vec3(0.0f, 5.0f, 3.0f));
 
     
     
@@ -48,12 +48,6 @@ int main()
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
-
-    
-    //链接上去了之后就不需要着色对象了
-    //glDeleteVertexArrays(1, &VAO);
-    //glDeleteBuffers(1, &VBO);
-    //glDeleteBuffers(1, &EBO);
     
     glfwTerminate();
     return 0;

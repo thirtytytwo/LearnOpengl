@@ -12,9 +12,10 @@ public:
 	unsigned int ID;
 	
 	Texture(const std::string& path);
+	~Texture();
 	
 	void Active(GLenum textureLocation);
-	~Texture();
+	void Bind();
 };
 
 inline Texture::Texture(const std::string& path)
@@ -51,13 +52,16 @@ inline Texture::Texture(const std::string& path)
 
 inline Texture::~Texture()
 {
-	glDeleteTextures(1, &ID);
 }
 
 inline void Texture::Active(GLenum textureLocation)
 {
 	glActiveTexture(textureLocation);
+}
+inline void Texture::Bind()
+{
 	glBindTexture(GL_TEXTURE_2D, ID);
 }
+
 
 

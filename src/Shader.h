@@ -12,14 +12,15 @@
 #include "Light.h"
 
 
-const std::string vertexPath = "Shader/";
-const std::string fragmentPath = "Shader/";
+const std::string shaderPath = "Assets/Shader/";
 const std::string shaderSuffix = ".glsl";
 
 const std::string keyWorldMatrix = "WorldMatrix";
+const std::string keyInvTransWorldMatrix = "InvTransWorldMatrix";
 const std::string keyViewMatrix = "ViewMatrix";
 const std::string keyProjectionMatrix = "ProjectionMatrix";
 const std::string keyCameraPosition = "CameraPosition";
+
 class Shader
 {
 public:
@@ -32,6 +33,7 @@ public:
     void use();
     //场景数据相关
     void SetCameraProps(Camera camera);
+    void SetWolrd(mat4 worldMatrix);
     void SetLight(Light light);
     // uniform工具函数
     void SetBool(const std::string &name, bool value) const;  
@@ -58,8 +60,8 @@ inline Shader::Shader(std::string shaderName)
         {
             std::string shaderVertexName = shaderName + "Vertex";
             std::string shaderFragmentName = shaderName + "Fragment";
-            vShaderFile.open(vertexPath + shaderName + "/" + shaderVertexName + shaderSuffix);
-            fShaderFile.open(fragmentPath + shaderName + "/" + shaderFragmentName + shaderSuffix);
+            vShaderFile.open(shaderPath + shaderName + "/" + shaderVertexName + shaderSuffix);
+            fShaderFile.open(shaderPath + shaderName + "/" + shaderFragmentName + shaderSuffix);
             std::stringstream vShaderStream, fShaderStream;
             vShaderStream << vShaderFile.rdbuf();
             fShaderStream << fShaderFile.rdbuf();
@@ -115,6 +117,11 @@ inline void Shader::SetLight(Light light)
     SetVec3("mainLight.position", light.position);
     SetVec3("mainLight.color", light.color);
     SetVec3("mainLight.direction", light.direction);
+}
+inline void Shader::SetWolrd(mat4 worldMatrix)
+{
+    SetMat4(keyWorldMatrix, worldMatrix);
+    SetMat4(keyInvTransWorldMatrix, transpose(inverse(worldMatrix)));
 }
 
 

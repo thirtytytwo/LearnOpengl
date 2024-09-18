@@ -75,9 +75,7 @@ inline void Model::ProcessMesh(aiMesh* mesh, const aiScene* scene)
     {
         Vertex vert;
 
-        vec2 vector2;
         vec3 vector3;
-        vec4 vector4;
         //位置
         vector3.x = mesh->mVertices[i].x;
         vector3.y = mesh->mVertices[i].y;
@@ -92,6 +90,7 @@ inline void Model::ProcessMesh(aiMesh* mesh, const aiScene* scene)
 
         if(mesh->HasVertexColors(0))
         {
+            vec4 vector4;
             vector4.x = mesh->mColors[0][i].r;
             vector4.y = mesh->mColors[0][i].g;
             vector4.z = mesh->mColors[0][i].b;
@@ -104,6 +103,7 @@ inline void Model::ProcessMesh(aiMesh* mesh, const aiScene* scene)
         {
             if(mesh->mTextureCoords[j])
             {
+                vec2 vector2;
                 vector2.x = mesh->mTextureCoords[j][i].x;
                 vector2.y = mesh->mTextureCoords[j][i].y;
                 vert.uv[j] = vector2;
@@ -113,6 +113,11 @@ inline void Model::ProcessMesh(aiMesh* mesh, const aiScene* scene)
                     vector3.y = mesh->mTangents[i].y;
                     vector3.z = mesh->mTangents[i].z;
                     vert.tangent = vector3;
+
+                    vector3.x = mesh->mBitangents[i].x;
+                    vector3.y = mesh->mBitangents[i].y;
+                    vector3.z = mesh->mBitangents[i].z;
+                    vert.bitangent = vector3;
                 }
             }
             else
@@ -164,8 +169,7 @@ inline void Model::Render(Camera &camera, Light &light, mat4 &&worldMatrix)
     for (int i = 0; i < meshes.size(); i++)
     {
         materials[i].Render(camera, light, worldMatrix);
-        glBindVertexArray(meshes[i].VAO);
-        glDrawElements(GL_TRIANGLES, meshes[i].GetIndicesNum(), GL_UNSIGNED_INT, 0);
+        meshes[i].Render();
     }
 }
 
