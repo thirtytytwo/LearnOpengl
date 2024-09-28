@@ -164,6 +164,8 @@
     <Content Include="Assets\ShaderLibrary\Lighting.glsl" />
     <Content Include="Assets\Shader\Lit\LitFragment.glsl" />
     <Content Include="Assets\Shader\Lit\LitVertex.glsl" />
+    <Content Include="Assets\Shader\ResolveToScreen\ResolveToScreenFragment.glsl" />
+    <Content Include="Assets\Shader\ResolveToScreen\ResolveToScreenVertex.glsl" />
     <Content Include="Assets\Textures\nanosuit\arm_dif.png" />
     <Content Include="Assets\Textures\nanosuit\arm_showroom_ddn.png" />
     <Content Include="Assets\Textures\nanosuit\arm_showroom_spec.png" />
