@@ -157,7 +157,7 @@ inline vector<Texture> Model::LoadMaterialTextures(aiMaterial* mat, aiTextureTyp
         aiString str;
         mat->GetTexture(type, i, &str);
         string fileName = str.C_Str();
-        Texture texture(texturePath + modelName + "/" + fileName);
+        Texture texture(modelName + "/" + fileName);
         textures.push_back(texture);
        
     }
