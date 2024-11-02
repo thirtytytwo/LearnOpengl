@@ -140,7 +140,7 @@ int main()
     Texture skyboxTexture = Texture("sunshine", Cube);
     Shader skyboxShader = Shader("Skybox");
     shader.use();
-    shader.SetInt("MainTex", 0);
+    shader.SetInt("Skybox", 0);
 
     
 
@@ -256,6 +256,11 @@ void KeyboradInput(GLFWwindow* window)
 
 void MouseCallback(GLFWwindow* window, double xposIn, double yposIn)
 {
+    if(!glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT))
+    {
+        firstMouse = true;
+        return;
+    }
     float xpos = static_cast<float>(xposIn);
     float ypos = static_cast<float>(yposIn);
 

@@ -9,19 +9,22 @@ layout (location = 5) in vec2 inputUV;
 
 #include "Assets/ShaderLibrary/Common.glsl"
 
-out vec2 uv;
-out vec3 positionWS;
-out vec3 normalWS;
-out vec3 tangentWS;
-out vec3 bitangentWS;
+out Varying
+{
+    vec2 uv;
+    vec3 positionWS;
+    vec3 normalWS;
+    vec3 tangentWS;
+    vec3 bitangentWS;
+}output;
 
 void main()
 {
 
     gl_Position = TransformObjectToHClip(vec4(positionOS, 1.0));
-    positionWS = TransformObjectToWorld(positionOS);
-    normalWS = TransformObjectToWorldNormal(normalOS);
-    tangentWS = TransformObjectToWorldDir(tangentOS);
-    bitangentWS = TransformObjectToWorldDir(bitangentOS);
-    uv = inputUV;
+    output.positionWS = TransformObjectToWorld(positionOS);
+    output.normalWS = TransformObjectToWorldNormal(normalOS);
+    output.tangentWS = TransformObjectToWorldDir(tangentOS);
+    output.bitangentWS = TransformObjectToWorldDir(bitangentOS);
+    output.uv = inputUV;
 }
