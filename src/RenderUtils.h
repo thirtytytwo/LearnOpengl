@@ -1,4 +1,5 @@
 ﻿#pragma once
+#include "Shader.h"
 #include "Texture.h"
 
 enum RenderQueue
@@ -15,9 +16,9 @@ struct Buffer
 {
     std::vector<Texture> textures;
     Shader shader;
+    mat4 worldMatrix;
     unsigned int VAO;
     unsigned int indices;
-    RenderQueue queue;
 
     Buffer();
 };
@@ -113,3 +114,5 @@ unsigned int& GetQuadMesh()
     }
     return quadVAO;
 }
+
+void SetRenderTarget();

@@ -3,6 +3,7 @@
 
 #include "Camera.h"
 #include "Light.h"
+#include "Material.h"
 #include "RenderUtils.h"
 
 class RenderPipeline
@@ -23,7 +24,7 @@ public:
 
     void Setup(Camera &camera, Light &light);
     void Render();
-    void EnqueueBuffer(Buffer &buffer);
+    void EnqueueBuffer(Buffer &buffer, RenderQueue queue);
     
     // Delete copy constructor and assignment operator
     RenderPipeline(const RenderPipeline&) = delete;
@@ -38,7 +39,11 @@ private:
     void DrawFinal();
     
 
-    std::vector<Buffer*> m_RenderList;
+    std::vector<Buffer*> m_OpaqueRenderList;
+    std::vector<Buffer*> m_TransparentRenderList;
+    std::vector<Buffer*> m_PostEffectRenderList;
+    Buffer* m_SkyboxRender;
+    
     Camera *m_Camera;
     Light *m_Light;
     

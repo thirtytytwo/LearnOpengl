@@ -14,7 +14,9 @@ class Material
 {
 public:
     Material(vector<Texture> textures, string shaderName = "");
+    Material(Texture texture, string shaderName = ""):Material(vector<Texture>{texture}, std::move(shaderName)){}
 
+    void SetupTexture(int index, string location);
     void Setup(Buffer &buffer);
 private:
     vector<Texture> textures;
@@ -30,6 +32,13 @@ inline Material::Material(vector<Texture> textures, string shaderName):shader(Sh
     shader.SetInt("_MainTex", 0);
     shader.SetInt("_NormalTex", 1);
 }
+
+inline void Material::SetupTexture(int index, string location)
+{
+    shader.use();
+    shader.SetInt(location, index);
+}
+
 
 inline void Material::Setup(Buffer &buffer)
 {

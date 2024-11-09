@@ -32,9 +32,7 @@ public:
     // 使用激活程序
     void use();
     //场景数据相关
-    void SetCameraProps(Camera camera);
     void SetWolrd(mat4 worldMatrix);
-    void SetLight(Light light);
     // uniform工具函数
     void SetBool(const std::string &name, bool value) const;  
     void SetInt(const std::string& name, int value) const;
@@ -106,18 +104,12 @@ inline void Shader::use()
     glUseProgram(ID);
 }
 
-inline void Shader::SetCameraProps(Camera camera) 
-{
-    SetMat4(keyViewMatrix, camera.GetViewMatrix());
-    SetMat4(keyProjectionMatrix, camera.GetProjectionMatrix());
-    SetVec3(keyCameraPosition, camera.GetPosition());
-}
-inline void Shader::SetLight(Light light)
-{
-    SetVec3("mainLight.position", light.position);
-    SetVec3("mainLight.color", light.color);
-    SetVec3("mainLight.direction", light.direction);
-}
+// inline void Shader::SetLight(Light light)
+// {
+//     SetVec3("mainLight.position", light.position);
+//     SetVec3("mainLight.color", light.color);
+//     SetVec3("mainLight.direction", light.direction);
+// }
 inline void Shader::SetWolrd(mat4 worldMatrix)
 {
     SetMat4(keyWorldMatrix, worldMatrix);

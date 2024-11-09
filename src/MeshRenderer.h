@@ -171,6 +171,7 @@ inline void MeshRenderer::Setup()
     {
         Buffer buffer = Buffer();
         meshes[i].Setup(buffer);
+        materials[i].Setup(buffer);
     }
 }
 

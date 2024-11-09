@@ -64,9 +64,10 @@ int main()
     glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
 
     Texture skyboxTexture = Texture("sunshine", Cube);
-    Shader skyboxShader = Shader("Skybox");
-    shader.use();
-    shader.SetInt("Skybox", 0);
+    Buffer* skyboxBuffer = new Buffer();
+    Material skyboxMaterial = Material({skyboxTexture}, "Skybox");
+    skyboxMaterial.Setup(*skyboxBuffer);
+    RenderPipeline::GetInstance().EnqueueBuffer(*skyboxBuffer, Skybox);
 
     
 
@@ -98,8 +99,7 @@ int main()
 
         KeyboradInput(window);
         camera.SetAspectRatio((screenWidth / screenHeight));
-
-        RenderPipeline::GetInstance().Render();
+        
         
         glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
         glEnable(GL_DEPTH_TEST);
@@ -110,16 +110,7 @@ int main()
 
 		testObject.Render(camera, light);
 
-        glDepthFunc(GL_LEQUAL);
-        skyboxShader.use();
-        skyboxShader.SetCameraProps(camera);
-        glBindVertexArray(cubeVAO);
-        skyboxTexture.Active(GL_TEXTURE0);
-        skyboxTexture.Bind();
-        glDrawArrays(GL_TRIANGLES, 0, 36);
-        glBindVertexArray(0);
-        glDepthFunc(GL_LESS);
-
+        RenderPipeline::GetInstance().Render();
         //物体已经渲染到指定的framebuffer上，现在需要把framebuffer中的值拷贝到最终的屏幕上
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
         glDisable(GL_DEPTH_TEST); // disable depth test so screen-space quad isn't discarded due to depth test.
