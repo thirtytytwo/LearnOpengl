@@ -8,6 +8,8 @@
 #include <gtc/matrix_transform.hpp>
 #include <gtc/type_ptr.hpp>
 
+#include "RenderUtils.h"
+
 using namespace glm;
 using namespace std;
 
@@ -25,7 +27,7 @@ class Mesh
 public:
     Mesh(vector<Vertex> vertices, vector<unsigned int> indices);
 
-    void Render();
+    void Setup(Buffer &buffer);
 private:
     vector<Vertex> vertices;
     vector<unsigned int> indices;
@@ -86,11 +88,13 @@ inline void Mesh::SetupMesh()
     glBindVertexArray(0);
 }
 
-inline void Mesh::Render()
+inline void Mesh::Setup(Buffer &buffer)
 {
-    glBindVertexArray(VAO);
-    glDrawElements(GL_TRIANGLES, static_cast<unsigned int>(indices.size()), GL_UNSIGNED_INT, 0);
-    glBindVertexArray(0);
-    glActiveTexture(GL_TEXTURE0);
+    // glBindVertexArray(VAO);
+    // glDrawElements(GL_TRIANGLES, static_cast<unsigned int>(indices.size()), GL_UNSIGNED_INT, 0);
+    // glBindVertexArray(0);
+    // glActiveTexture(GL_TEXTURE0);
+    buffer.VAO = VAO;
+    buffer.indices = static_cast<unsigned int>(indices.size());
 }
 

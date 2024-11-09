@@ -143,21 +143,6 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="src\glad.c" />
-    <ClCompile Include="src\main.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="src\Camera.h" />
-    <ClInclude Include="src\GameObject.h" />
-    <ClInclude Include="src\Light.h" />
-    <ClInclude Include="src\Material.h" />
-    <ClInclude Include="src\Mesh.h" />
-    <ClInclude Include="src\Model.h" />
-    <ClInclude Include="src\Shader.h" />
-    <ClInclude Include="src\stb_image.h" />
-    <ClInclude Include="src\Texture.h" />
-  </ItemGroup>
-  <ItemGroup>
     <Content Include="Assets\Meshes\nanosuit\nanosuit.mtl" />
     <Content Include="Assets\Meshes\nanosuit\nanosuit.obj" />
     <Content Include="Assets\ShaderLibrary\Common.glsl" />
@@ -186,6 +171,24 @@
     <Content Include="Assets\Textures\nanosuit\leg_showroom_ddn.png" />
     <Content Include="Assets\Textures\nanosuit\leg_showroom_spec.png" />
     <Content Include="Assets\Textures\UVCommon.jpg" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="src\Camera.h" />
+    <ClInclude Include="src\GameObject.h" />
+    <ClInclude Include="src\Light.h" />
+    <ClInclude Include="src\Material.h" />
+    <ClInclude Include="src\Mesh.h" />
+    <ClInclude Include="src\MeshRenderer.h" />
+    <ClInclude Include="src\RenderPipeline.h" />
+    <ClInclude Include="src\RenderUtils.h" />
+    <ClInclude Include="src\Shader.h" />
+    <ClInclude Include="src\stb_image.h" />
+    <ClInclude Include="src\Texture.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="src\glad.c" />
+    <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\RenderPipeline.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

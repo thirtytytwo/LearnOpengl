@@ -6,21 +6,22 @@
 #include <assimp/postprocess.h>
 #include "Mesh.h"
 #include "Material.h"
+#include "RenderUtils.h"
 
 const string modelPath = "Assets/Meshes/";
-class Model
+class MeshRenderer
 {
 public:
-    Model(string modelName, string shaderName = "Lit");
-    ~Model(){}
+    MeshRenderer(string modelName, string shaderName = "Lit");
 
-    void Render(Camera& camera, Light& light, mat4 &&modelMatrix);
+    void Setup();
 
 private:
     vector<Material> materials;
     vector<Mesh> meshes;
     string shaderName;
     string modelName;
+    RenderQueue queue = Opaque;
     
     void LoadModel(const char* path);
     void ProcessNode(aiNode* node, const aiScene* scene);
@@ -28,7 +29,7 @@ private:
     vector<Texture> LoadMaterialTextures(aiMaterial* mat, aiTextureType type);
 };
 
-inline Model::Model(string modelName, string shaderName)
+inline MeshRenderer::MeshRenderer(string modelName, string shaderName)
 {
     string path = modelPath + modelName + "/" + modelName + ".obj";
     this->shaderName = std::move(shaderName);
@@ -36,7 +37,7 @@ inline Model::Model(string modelName, string shaderName)
     LoadModel(path.c_str());
 }
 
-inline void Model::LoadModel(const char* path)
+inline void MeshRenderer::LoadModel(const char* path)
 {
     Assimp::Importer importer;
     const aiScene* scene = importer.ReadFile(path, aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_CalcTangentSpace | aiProcess_GenNormals);
@@ -49,7 +50,7 @@ inline void Model::LoadModel(const char* path)
     ProcessNode(scene->mRootNode, scene);
 }
 
-inline void Model::ProcessNode(aiNode* node, const aiScene* scene)
+inline void MeshRenderer::ProcessNode(aiNode* node, const aiScene* scene)
 {
     for(unsigned int i = 0; i < node->mNumMeshes; i++)
     {
@@ -64,7 +65,7 @@ inline void Model::ProcessNode(aiNode* node, const aiScene* scene)
     }
 }
 
-inline void Model::ProcessMesh(aiMesh* mesh, const aiScene* scene)
+inline void MeshRenderer::ProcessMesh(aiMesh* mesh, const aiScene* scene)
 {
     vector<Vertex> vertices;
     vector<unsigned int> indices;
@@ -149,7 +150,7 @@ inline void Model::ProcessMesh(aiMesh* mesh, const aiScene* scene)
     
 }
 
-inline vector<Texture> Model::LoadMaterialTextures(aiMaterial* mat, aiTextureType type)
+inline vector<Texture> MeshRenderer::LoadMaterialTextures(aiMaterial* mat, aiTextureType type)
 {
     vector<Texture> textures;
     for(unsigned int i = 0; i < mat->GetTextureCount(type); i++)
@@ -164,12 +165,12 @@ inline vector<Texture> Model::LoadMaterialTextures(aiMaterial* mat, aiTextureTyp
     return textures;
 }
 
-inline void Model::Render(Camera &camera, Light &light, mat4 &&worldMatrix)
+inline void MeshRenderer::Setup()
 {
     for (int i = 0; i < meshes.size(); i++)
     {
-        materials[i].Render(camera, light, worldMatrix);
-        meshes[i].Render();
+        Buffer buffer = Buffer();
+        meshes[i].Setup(buffer);
     }
 }
 

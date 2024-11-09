@@ -1,24 +1,24 @@
 #pragma once
 
-#include "Model.h"
+#include "MeshRenderer.h"
 
 class GameObject
 {
 public:
-    GameObject(vec3 position = vec3(0), vec3 rotation = vec3(0), vec3 scale = vec3(1), string modelPath = ""):position(position), rotation(rotation), scale(scale), model(modelPath){}
+    GameObject(vec3 position = vec3(0), vec3 rotation = vec3(0), vec3 scale = vec3(1)):position(position), rotation(rotation), scale(scale){}
     
     void Translate(vec3 position);
     void Rotate(vec3 rotation);
-
+    void SetupMeshRenderer(std::string mesh);
+    
     mat4 GetWorldMatrix();
 
     void Render(Camera &camera, Light &light);
-    void FinishRender();
 private:
     vec3 position;
     vec3 rotation;
     vec3 scale;
-    Model model;
+    MeshRenderer renderer{nullptr};
 };
 
 inline void GameObject::Translate(vec3 position)
@@ -44,10 +44,5 @@ inline mat4 GameObject::GetWorldMatrix()
 
 inline void GameObject::Render(Camera  &camera, Light &light)
 {
-    model.Render(camera, light, GetWorldMatrix());
-}
-
-inline void GameObject::FinishRender()
-{
-
+    renderer.Render(camera, light, GetWorldMatrix());
 }
