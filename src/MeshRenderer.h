@@ -6,6 +6,7 @@
 #include <assimp/postprocess.h>
 #include "Mesh.h"
 #include "Material.h"
+#include "RenderPipeline.h"
 #include "RenderUtils.h"
 
 const string modelPath = "Assets/Meshes/";
@@ -14,7 +15,7 @@ class MeshRenderer
 public:
     MeshRenderer(string modelName, string shaderName = "Lit");
 
-    void Setup();
+    void Setup(mat4 worldMatrix);
 
 private:
     vector<Material> materials;
@@ -165,13 +166,15 @@ inline vector<Texture> MeshRenderer::LoadMaterialTextures(aiMaterial* mat, aiTex
     return textures;
 }
 
-inline void MeshRenderer::Setup()
+inline void MeshRenderer::Setup(mat4 worldMatrix)
 {
     for (int i = 0; i < meshes.size(); i++)
     {
-        Buffer buffer = Buffer();
+        Buffer buffer;
         meshes[i].Setup(buffer);
         materials[i].Setup(buffer);
+        buffer.worldMatrix = worldMatrix;
+        RenderPipeline::GetInstance().EnqueueBuffer(buffer, queue);
     }
 }
 

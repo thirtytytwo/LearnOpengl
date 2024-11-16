@@ -23,7 +23,9 @@ public:
     }
 
     void Setup(Camera &camera, Light &light);
+    void BeginRender();
     void Render();
+    void FinishRender();
     void EnqueueBuffer(Buffer &buffer, RenderQueue queue);
     
     // Delete copy constructor and assignment operator
@@ -32,9 +34,8 @@ public:
 private:
     RenderPipeline(){}
 
-    void Prepare();
     void DrawOpaque();
-    void DrawTransparent();
+    //void DrawTransparent();
     void DrawSkybox();
     void DrawFinal();
     
@@ -42,10 +43,18 @@ private:
     std::vector<Buffer*> m_OpaqueRenderList;
     std::vector<Buffer*> m_TransparentRenderList;
     std::vector<Buffer*> m_PostEffectRenderList;
-    Buffer* m_SkyboxRender;
+    
+    Shader *m_SkyboxShader;
+    Texture *m_SkyboxTexture;
+    
+    Shader *m_FinalShader;
     
     Camera *m_Camera;
     Light *m_Light;
+
+    unsigned int m_framebuffer;
+    unsigned int m_colorAttachment;
+    unsigned int m_depthAttachment;
     
     static RenderPipeline* m_Instance;
 };

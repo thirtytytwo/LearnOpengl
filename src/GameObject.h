@@ -12,13 +12,13 @@ public:
     void SetupMeshRenderer(std::string mesh);
     
     mat4 GetWorldMatrix();
-
-    void Render(Camera &camera, Light &light);
+    
+    void Setup();
 private:
     vec3 position;
     vec3 rotation;
     vec3 scale;
-    MeshRenderer renderer{nullptr};
+    MeshRenderer* renderer{nullptr};
 };
 
 inline void GameObject::Translate(vec3 position)
@@ -42,7 +42,12 @@ inline mat4 GameObject::GetWorldMatrix()
     return modelMatrix;
 }
 
-inline void GameObject::Render(Camera  &camera, Light &light)
+inline void GameObject::SetupMeshRenderer(std::string mesh)
 {
-    renderer.Render(camera, light, GetWorldMatrix());
+    renderer = new MeshRenderer(mesh);
+}
+
+inline void GameObject::Setup()
+{
+    renderer->Setup(GetWorldMatrix());
 }

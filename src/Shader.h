@@ -9,7 +9,6 @@
 #include <regex>
 
 #include "Camera.h"
-#include "Light.h"
 
 
 const std::string shaderPath = "Assets/Shader/";
@@ -40,14 +39,14 @@ public:
 	void SetMat4(const std::string& name, mat4x4 value) const;
     void SetVec3(const std::string &name, vec3 value) const;
 private:
-    // utility function for checking shader compilation/linking errors.
-    // ------------------------------------------------------------------------
+    
     void checkCompileErrors(unsigned int shader, std::string type);
     void SearchIncludeFiles(std::string& shaderCode);
 };
 
 inline Shader::Shader(std::string shaderName)
 {
+    if(shaderName == "") return;
     std::string vertexCode;
         std::string fragmentCode;
         std::ifstream vShaderFile;

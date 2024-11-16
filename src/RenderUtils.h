@@ -6,26 +6,28 @@ enum RenderQueue
 {
     Background = 100,
     Opaque = 200,
-    Skybox = 250,
     Transparents = 300,
     PostEffect = 400,
-    Final = 500
 };
 
 struct Buffer
 {
+    Buffer();
     std::vector<Texture> textures;
     Shader shader;
     mat4 worldMatrix;
     unsigned int VAO;
     unsigned int indices;
 
-    Buffer();
 };
-
-unsigned int& GetCubeMesh()
+inline Buffer::Buffer(): shader(""), VAO(0), indices(0)
 {
-    static unsigned int cubeVAO = 0;
+}
+
+
+static unsigned int& GetCubeMesh()
+{
+    static unsigned int cubeVAO = 36;
     if (cubeVAO == 0)
     {
         float skyboxVertices[] = {
@@ -85,9 +87,9 @@ unsigned int& GetCubeMesh()
     return cubeVAO;
 }
 
-unsigned int& GetQuadMesh()
+static unsigned int& GetQuadMesh()
 {
-    static unsigned int quadVAO = 0;
+    static unsigned int quadVAO = 6;
     if(quadVAO == 0)
     {
         float quadVertices[] = { // vertex attributes for a quad that fills the entire screen in Normalized Device Coordinates.
@@ -115,4 +117,26 @@ unsigned int& GetQuadMesh()
     return quadVAO;
 }
 
-void SetRenderTarget();
+static void SetRenderTarget(unsigned int &framebuffer, unsigned int &color, unsigned int &depth, i8vec2 size)
+{
+    glGenFramebuffers(1, &framebuffer);
+    glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
+    
+    glGenTextures(1, &color);
+    glBindTexture(GL_TEXTURE_2D, color);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, size.x, size.y, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, color, 0);
+    
+    glGenRenderbuffers(1, &depth);
+    glBindRenderbuffer(GL_RENDERBUFFER, depth);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, size.x, size.y);
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, depth);
+
+    if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+    {
+        std::cout << "Framebuffer is not complete" << std::endl;
+    }
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}

@@ -1,8 +1,8 @@
 #pragma once
 
-#define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
+using namespace std;
 const std::string texturePath = "Assets/Textures/";
 
 enum TextureType

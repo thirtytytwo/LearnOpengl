@@ -1,10 +1,14 @@
 #ifndef _COMMON_GLSL_
 #define _COMMON_GLSL_
 
+layout(std140) uniform CameraBuffer
+{
+    mat4 ProjectionMatrix;
+    mat4 ViewMatrix;
+}
+
 uniform mat4 WorldMatrix;
 uniform mat4 InvTransWorldMatrix;
-uniform mat4 ViewMatrix;
-uniform mat4 ProjectionMatrix;
 
 
 //空间变换
