@@ -94,7 +94,7 @@ inline void Mesh::Setup(Buffer &buffer)
     // glDrawElements(GL_TRIANGLES, static_cast<unsigned int>(indices.size()), GL_UNSIGNED_INT, 0);
     // glBindVertexArray(0);
     // glActiveTexture(GL_TEXTURE0);
-    buffer.VAO = VAO;
+    buffer.VAO = &VAO;
     buffer.indices = static_cast<unsigned int>(indices.size());
 }
 

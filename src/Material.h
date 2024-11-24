@@ -52,8 +52,11 @@ inline void Material::Setup(Buffer &buffer)
     // this->textures[0].Bind();
     // this->textures[1].Active(GL_TEXTURE1);
     // this->textures[1].Bind();
-    buffer.shader = shader;
-    buffer.textures = textures;
+    buffer.shader = &shader;
+    for (int i = 0; i < textures.size(); i++)
+    {
+        buffer.textures.push_back(&textures[i]);
+    }
 }
 
 

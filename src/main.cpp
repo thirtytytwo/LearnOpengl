@@ -53,6 +53,7 @@ int main()
     Light light = Light();
     GameObject testObject = GameObject(vec3(0.f), vec3(0.0f), vec3(0.5f));
     testObject.SetupMeshRenderer("nanosuit");
+    testObject.Setup();
 	camera.SetPosition(glm::vec3(0.0f, 5.0f, 3.0f));
 
     RenderPipeline::GetInstance().Setup(camera, light);

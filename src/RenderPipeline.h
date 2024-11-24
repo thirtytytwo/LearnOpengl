@@ -32,7 +32,7 @@ public:
     RenderPipeline(const RenderPipeline&) = delete;
     RenderPipeline& operator=(const RenderPipeline&) = delete;
 private:
-    RenderPipeline(){}
+    RenderPipeline():m_framebuffer(0), m_colorAttachment(0), m_depthAttachment(0){}
 
     void DrawOpaque();
     //void DrawTransparent();

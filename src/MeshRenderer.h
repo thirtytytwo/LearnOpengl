@@ -170,11 +170,11 @@ inline void MeshRenderer::Setup(mat4 worldMatrix)
 {
     for (int i = 0; i < meshes.size(); i++)
     {
-        Buffer buffer;
-        meshes[i].Setup(buffer);
-        materials[i].Setup(buffer);
-        buffer.worldMatrix = worldMatrix;
-        RenderPipeline::GetInstance().EnqueueBuffer(buffer, queue);
+        Buffer* buffer = new Buffer();
+        meshes[i].Setup(*buffer);
+        materials[i].Setup(*buffer);
+        buffer->worldMatrix = worldMatrix;
+        RenderPipeline::GetInstance().EnqueueBuffer(*buffer, queue);
     }
 }
 

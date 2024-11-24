@@ -7,7 +7,26 @@ void RenderPipeline::Setup(Camera &camera, Light &light)
 {
     m_Camera = &camera;
     m_Light = &light;
-    SetRenderTarget(m_framebuffer, m_colorAttachment, m_depthAttachment, i8vec2(1920, 1080));
+    glGenFramebuffers(1, &m_framebuffer);
+    glBindFramebuffer(GL_FRAMEBUFFER, m_framebuffer);
+    
+    glGenTextures(1, &m_colorAttachment);
+    glBindTexture(GL_TEXTURE_2D, m_colorAttachment);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 1920, 1080, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_colorAttachment, 0);
+    
+    glGenRenderbuffers(1, &m_depthAttachment);
+    glBindRenderbuffer(GL_RENDERBUFFER, m_depthAttachment);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, 1920, 1080);
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, m_depthAttachment);
+
+    if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+    {
+        std::cout << "Framebuffer is not complete" << std::endl;
+    }
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
     //Setup Skybox
     m_SkyboxShader = new Shader("Skybox");
@@ -48,6 +67,13 @@ void RenderPipeline::Render()
 
 void RenderPipeline::BeginRender()
 {
+    for (auto buffer : m_OpaqueRenderList)
+    {
+        unsigned int uniformBlock = glGetUniformBlockIndex(buffer->shader->ID, "CameraBuffer");
+        glUniformBlockBinding(buffer->shader->ID, uniformBlock, 0);
+    }
+    unsigned int uniformBlock = glGetUniformBlockIndex(m_SkyboxShader->ID, "CameraBuffer");
+    glUniformBlockBinding(m_SkyboxShader->ID, uniformBlock, 0);
     
     unsigned int uboMatrices;
     glGenBuffers(1, &uboMatrices);
@@ -79,16 +105,14 @@ void RenderPipeline::FinishRender()
     for (auto& buffer : m_OpaqueRenderList)
     {
         buffer->textures.clear();
-        glDeleteBuffers(1, &buffer->VAO);
+        glDeleteBuffers(1, buffer->VAO);
     }
     m_OpaqueRenderList.clear();
 
     delete(m_SkyboxTexture);
     delete(m_SkyboxShader);
-    glDeleteBuffers(1, &GetCubeMesh());
 
     delete(m_FinalShader);
-    glDeleteBuffers(1, &GetQuadMesh());
     
     glDeleteFramebuffers(1, &m_framebuffer);
     glDeleteTextures(1, &m_colorAttachment);
@@ -99,39 +123,31 @@ void RenderPipeline::FinishRender()
 
 void RenderPipeline::DrawOpaque()
 {
-    for (auto& buffer : m_OpaqueRenderList)
+    for (auto buffer : m_OpaqueRenderList)
     {
-        buffer->shader.use();
-
-        unsigned int uniformBlock = glGetUniformBlockIndex(buffer->shader.ID, "CameraBuffer");
-        glUniformBlockBinding(buffer->shader.ID, uniformBlock, 0);
-        buffer->shader.SetWolrd(buffer->worldMatrix);
+        buffer->shader->use();
+        
+        buffer->shader->SetWolrd(buffer->worldMatrix);
         
         for (int i = 0; i < buffer->textures.size(); i++)
         {
-            buffer->textures[i].Active(GL_TEXTURE0 + i);
-            buffer->textures[i].Bind();
+            buffer->textures[i]->Active(GL_TEXTURE0 + i);
+            buffer->textures[i]->Bind();
         }
-        glBindVertexArray(buffer->VAO);
+        glBindVertexArray(*buffer->VAO);
         glDrawElements(GL_TRIANGLES, buffer->indices, GL_UNSIGNED_INT, 0);
     }
 }
 
 void RenderPipeline::DrawSkybox()
 {
-    auto id = GetCubeMesh();
     glDepthFunc(GL_LEQUAL);
     m_SkyboxShader->use();
-
-    unsigned int uniformBlock = glGetUniformBlockIndex(m_SkyboxShader->ID, "CameraBuffer");
-    glUniformBlockBinding(m_SkyboxShader->ID, uniformBlock, 0);
     
     m_SkyboxShader->SetInt("Skybox", 0);
     m_SkyboxTexture->Active(GL_TEXTURE0);
     m_SkyboxTexture->Bind();
-    glBindVertexArray(id);
-    glDrawArrays(GL_TRIANGLES, 0, static_cast<int>(id));
-    glBindVertexArray(0);
+    DrawCubeMesh();
     glDepthFunc(GL_LESS);
 }
 
@@ -143,15 +159,10 @@ void RenderPipeline::DrawFinal()
     // clear all relevant buffers
     glClearColor(1.0f, 1.0f, 1.0f, 1.0f); // set clear color to white (not really necessary actually, since we won't be able to see behind the quad anyways)
     glClear(GL_COLOR_BUFFER_BIT);
-    
-    auto id = GetQuadMesh();
 
     m_FinalShader->use();
-
-    glBindVertexArray(id);
     glBindTexture(GL_TEXTURE_2D, m_colorAttachment);
-    glDrawArrays(GL_TRIANGLES, 0, static_cast<int>(id));
-    glBindVertexArray(0);
+    DrawQuadMesh();
     glDepthFunc(GL_LESS);
 }
 
