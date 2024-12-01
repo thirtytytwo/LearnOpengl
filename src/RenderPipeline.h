@@ -34,10 +34,15 @@ public:
 private:
     RenderPipeline():m_framebuffer(0), m_colorAttachment(0), m_depthAttachment(0){}
 
+    void SetupCamera();
+    void SetupLight();
+    
     void DrawOpaque();
     //void DrawTransparent();
     void DrawSkybox();
     void DrawFinal();
+
+    void SetBufferUniform(string name);
     
 
     std::vector<Buffer*> m_OpaqueRenderList;

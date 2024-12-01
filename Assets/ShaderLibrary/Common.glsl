@@ -5,6 +5,7 @@ layout(std140) uniform CameraBuffer
 {
     mat4 ProjectionMatrix;
     mat4 ViewMatrix;
+    vec4 CameraPosition;
 };
 
 uniform mat4 WorldMatrix;

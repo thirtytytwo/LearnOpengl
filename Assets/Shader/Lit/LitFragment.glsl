@@ -1,5 +1,6 @@
 ﻿#version 330 core
 
+#include "Assets/ShaderLibrary/Common.glsl"
 #include "Assets/ShaderLibrary/Lighting.glsl"
 
 in Varying
@@ -25,9 +26,5 @@ void main()
     vec3 normalTS = texture(_NormalTex, input.uv).rgb * 2.0 - 1.0;
     vec3 normal = normalize(TBN * normalTS);
     vec3 color = BilingPhongLight(normal, input.positionWS, baseColor);
-//折射天空盒实验
-    float ratio = 1.0 / 2.42;
-    vec3 i = normalize(input.positionWS - CameraPosition);
-    vec3 r = refract(i, normalize(input.normalWS), ratio);
-    FragColor = vec4(texture(Skybox, r).rgb, 1.0);
+    FragColor = vec4(color, 1.0);
 }

@@ -22,6 +22,9 @@ void RenderPipeline::Setup(Camera &camera, Light &light)
     glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, 1920, 1080);
     glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, m_depthAttachment);
 
+    SetupQuadMesh();
+    SetupCubeMesh();
+
     if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
     {
         std::cout << "Framebuffer is not complete" << std::endl;
@@ -64,34 +67,10 @@ void RenderPipeline::Render()
     DrawSkybox();
     DrawFinal();
 }
-
 void RenderPipeline::BeginRender()
 {
-    for (auto buffer : m_OpaqueRenderList)
-    {
-        unsigned int uniformBlock = glGetUniformBlockIndex(buffer->shader->ID, "CameraBuffer");
-        glUniformBlockBinding(buffer->shader->ID, uniformBlock, 0);
-    }
-    unsigned int uniformBlock = glGetUniformBlockIndex(m_SkyboxShader->ID, "CameraBuffer");
-    glUniformBlockBinding(m_SkyboxShader->ID, uniformBlock, 0);
-    
-    unsigned int uboMatrices;
-    glGenBuffers(1, &uboMatrices);
-    glBindBuffer(GL_UNIFORM_BUFFER, uboMatrices);
-    glBufferData(GL_UNIFORM_BUFFER, 2 * sizeof(glm::mat4), NULL, GL_STATIC_DRAW);
-    glBindBuffer(GL_UNIFORM_BUFFER, 0);
-
-    glBindBufferRange(GL_UNIFORM_BUFFER, 0, uboMatrices, 0, 2 * sizeof(glm::mat4));
-
-    auto proj = m_Camera->GetProjectionMatrix();
-    auto view = m_Camera->GetViewMatrix();
-
-    glBindBuffer(GL_UNIFORM_BUFFER, uboMatrices);
-    glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4), value_ptr(proj));
-    glBufferSubData(GL_UNIFORM_BUFFER, sizeof(glm::mat4), sizeof(glm::mat4), value_ptr(view));
-
-    glBindBuffer(GL_UNIFORM_BUFFER, 0);
-
+    SetupCamera();
+    SetupLight();
     glBindFramebuffer(GL_FRAMEBUFFER, m_framebuffer);
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
@@ -99,7 +78,6 @@ void RenderPipeline::BeginRender()
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
-
 void RenderPipeline::FinishRender()
 {
     for (auto& buffer : m_OpaqueRenderList)
@@ -118,6 +96,49 @@ void RenderPipeline::FinishRender()
     glDeleteTextures(1, &m_colorAttachment);
     glDeleteTextures(1, &m_depthAttachment);
 }
+
+void RenderPipeline::SetupCamera()
+{
+    SetBufferUniform("CameraBuffer");
+    
+    unsigned int uboMatrices;
+    glGenBuffers(1, &uboMatrices);
+    glBindBuffer(GL_UNIFORM_BUFFER, uboMatrices);
+    glBufferData(GL_UNIFORM_BUFFER, 2 * sizeof(glm::mat4) + sizeof(vec4), NULL, GL_STATIC_DRAW);
+    glBindBuffer(GL_UNIFORM_BUFFER, 0);
+
+    glBindBufferRange(GL_UNIFORM_BUFFER, 0, uboMatrices, 0, 2 * sizeof(glm::mat4) + sizeof(vec4));
+
+    auto proj = m_Camera->GetProjectionMatrix();
+    auto view = m_Camera->GetViewMatrix();
+    auto position = m_Camera->GetPosition();
+
+    glBindBuffer(GL_UNIFORM_BUFFER, uboMatrices);
+    glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4), value_ptr(proj));
+    glBufferSubData(GL_UNIFORM_BUFFER, sizeof(glm::mat4), sizeof(glm::mat4), value_ptr(view));
+    glBufferSubData(GL_UNIFORM_BUFFER, 2 * sizeof(glm::mat4), sizeof(vec4), value_ptr(position));
+    
+    glBindBuffer(GL_UNIFORM_BUFFER, 0);
+}
+void RenderPipeline::SetupLight()
+{
+    SetBufferUniform("LightBuffer");
+    unsigned int uboLight;
+    glGenBuffers(1, &uboLight);
+    glBindBuffer(GL_UNIFORM_BUFFER, uboLight);
+    glBufferData(GL_UNIFORM_BUFFER, 4 * sizeof(glm::vec3), NULL, GL_STATIC_DRAW);
+    glBindBuffer(GL_UNIFORM_BUFFER, 0);
+
+    glBindBufferRange(GL_UNIFORM_BUFFER, 0, uboLight, 0, 4 * sizeof(glm::vec3));
+    auto position = m_Light->position;
+    auto color = m_Light->color;
+    auto direction = m_Light->direction;
+    glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(vec3), value_ptr(position));
+    glBufferSubData(GL_UNIFORM_BUFFER, sizeof(vec3), sizeof(vec3), value_ptr(color));
+    glBufferSubData(GL_UNIFORM_BUFFER, 2 * sizeof(vec3), sizeof(vec3), value_ptr(direction));
+    glBindBuffer(GL_UNIFORM_BUFFER, 0);
+}
+
 
 
 
@@ -138,7 +159,6 @@ void RenderPipeline::DrawOpaque()
         glDrawElements(GL_TRIANGLES, buffer->indices, GL_UNSIGNED_INT, 0);
     }
 }
-
 void RenderPipeline::DrawSkybox()
 {
     glDepthFunc(GL_LEQUAL);
@@ -150,7 +170,6 @@ void RenderPipeline::DrawSkybox()
     DrawCubeMesh();
     glDepthFunc(GL_LESS);
 }
-
 void RenderPipeline::DrawFinal()
 {
     //物体已经渲染到指定的framebuffer上，现在需要把framebuffer中的值拷贝到最终的屏幕上
@@ -165,4 +184,17 @@ void RenderPipeline::DrawFinal()
     DrawQuadMesh();
     glDepthFunc(GL_LESS);
 }
+
+void RenderPipeline::SetBufferUniform(string name)
+{
+    for (auto buffer : m_OpaqueRenderList)
+    {
+        unsigned int uniformBlock = glGetUniformBlockIndex(buffer->shader->ID, name.c_str());
+        glUniformBlockBinding(buffer->shader->ID, uniformBlock, 0);
+    }
+    unsigned int uniformBlock = glGetUniformBlockIndex(m_SkyboxShader->ID, name.c_str());
+    glUniformBlockBinding(m_SkyboxShader->ID, uniformBlock, 0);
+}
+
+
 

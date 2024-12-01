@@ -1,12 +1,14 @@
 struct Light
 {
     vec3 position;
+    vec3 color;    
     vec3 direction;
-    vec3 color;
 };
 
-uniform Light mainLight;
-uniform vec3 CameraPosition;
+layout(std140) uniform LightBuffer
+{
+    Light mainLight;
+};
 
 vec3 BilingPhongLight(vec3 normal, vec3 positionWS, vec3 baseColor )
 {
