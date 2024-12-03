@@ -174,7 +174,8 @@ inline void Shader::SearchIncludeFiles(std::string& shaderCode)
         shadersStream.str("");
         shadersStream.clear();
         shadersStream << includeFile.rdbuf();
-        shaderCode.replace(match.position(0), match.length(0), shadersStream.str());
+        auto matchPos = std::distance(shaderCode.cbegin(), match.position(0) + start);
+        shaderCode.replace(matchPos, match.length(0), shadersStream.str());
         start = shaderCode.cbegin() + match.position(0) + shadersStream.str().length();
         end = shaderCode.cend();
         includeFile.close();

@@ -99,7 +99,7 @@ void RenderPipeline::FinishRender()
 
 void RenderPipeline::SetupCamera()
 {
-    SetBufferUniform("CameraBuffer");
+    SetBufferUniform("CameraBuffer", 0);
     
     unsigned int uboMatrices;
     glGenBuffers(1, &uboMatrices);
@@ -112,30 +112,34 @@ void RenderPipeline::SetupCamera()
     auto proj = m_Camera->GetProjectionMatrix();
     auto view = m_Camera->GetViewMatrix();
     auto position = m_Camera->GetPosition();
+    vec4 position4 = vec4(position, 1.0f);
 
     glBindBuffer(GL_UNIFORM_BUFFER, uboMatrices);
     glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4), value_ptr(proj));
     glBufferSubData(GL_UNIFORM_BUFFER, sizeof(glm::mat4), sizeof(glm::mat4), value_ptr(view));
-    glBufferSubData(GL_UNIFORM_BUFFER, 2 * sizeof(glm::mat4), sizeof(vec4), value_ptr(position));
+    glBufferSubData(GL_UNIFORM_BUFFER, 2 * sizeof(glm::mat4), sizeof(vec4), value_ptr(position4));
     
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
 }
 void RenderPipeline::SetupLight()
 {
-    SetBufferUniform("LightBuffer");
+    SetBufferUniform("LightBuffer", 1);
     unsigned int uboLight;
     glGenBuffers(1, &uboLight);
     glBindBuffer(GL_UNIFORM_BUFFER, uboLight);
-    glBufferData(GL_UNIFORM_BUFFER, 4 * sizeof(glm::vec3), NULL, GL_STATIC_DRAW);
+    glBufferData(GL_UNIFORM_BUFFER, 3 * sizeof(glm::vec4), NULL, GL_STATIC_DRAW);
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
-    glBindBufferRange(GL_UNIFORM_BUFFER, 0, uboLight, 0, 4 * sizeof(glm::vec3));
-    auto position = m_Light->position;
-    auto color = m_Light->color;
-    auto direction = m_Light->direction;
-    glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(vec3), value_ptr(position));
-    glBufferSubData(GL_UNIFORM_BUFFER, sizeof(vec3), sizeof(vec3), value_ptr(color));
-    glBufferSubData(GL_UNIFORM_BUFFER, 2 * sizeof(vec3), sizeof(vec3), value_ptr(direction));
+    glBindBufferRange(GL_UNIFORM_BUFFER, 1, uboLight, 0, 3 * sizeof(glm::vec4));
+    
+    vec4 position = vec4(m_Light->position, 1.0f);
+    vec4 color = vec4(m_Light->color,1.0f);
+    vec4 direction = vec4(m_Light->direction, 1.0f);
+
+    glBindBuffer(GL_UNIFORM_BUFFER, uboLight);
+    glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(vec4), value_ptr(position));
+    glBufferSubData(GL_UNIFORM_BUFFER, sizeof(vec4), sizeof(vec4), value_ptr(color));
+    glBufferSubData(GL_UNIFORM_BUFFER, 2 * sizeof(vec4), sizeof(vec4), value_ptr(direction));
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
 }
 
@@ -185,15 +189,15 @@ void RenderPipeline::DrawFinal()
     glDepthFunc(GL_LESS);
 }
 
-void RenderPipeline::SetBufferUniform(string name)
+void RenderPipeline::SetBufferUniform(string name, int index)
 {
     for (auto buffer : m_OpaqueRenderList)
     {
         unsigned int uniformBlock = glGetUniformBlockIndex(buffer->shader->ID, name.c_str());
-        glUniformBlockBinding(buffer->shader->ID, uniformBlock, 0);
+        glUniformBlockBinding(buffer->shader->ID, uniformBlock, index);
     }
     unsigned int uniformBlock = glGetUniformBlockIndex(m_SkyboxShader->ID, name.c_str());
-    glUniformBlockBinding(m_SkyboxShader->ID, uniformBlock, 0);
+    glUniformBlockBinding(m_SkyboxShader->ID, uniformBlock, index);
 }
 
 

@@ -28,8 +28,9 @@ inline Buffer::Buffer()
 static unsigned int cubeVAO;
 static void SetupCubeMesh()
 {
+
     float skyboxVertices[] = {
-        // positions
+        // positions          
         -1.0f,  1.0f, -1.0f,
         -1.0f, -1.0f, -1.0f,
          1.0f, -1.0f, -1.0f,
@@ -40,7 +41,7 @@ static void SetupCubeMesh()
         -1.0f, -1.0f,  1.0f,
         -1.0f, -1.0f, -1.0f,
         -1.0f,  1.0f, -1.0f,
-        -1.0f, -1.0f, -1.0f,
+        -1.0f,  1.0f, -1.0f,
         -1.0f,  1.0f,  1.0f,
         -1.0f, -1.0f,  1.0f,
 
@@ -71,7 +72,8 @@ static void SetupCubeMesh()
          1.0f, -1.0f, -1.0f,
         -1.0f, -1.0f,  1.0f,
          1.0f, -1.0f,  1.0f
-};
+    };
+
 
     unsigned int cubeVBO;
     glGenVertexArrays(1, &cubeVAO);

@@ -42,7 +42,7 @@ private:
     void DrawSkybox();
     void DrawFinal();
 
-    void SetBufferUniform(string name);
+    void SetBufferUniform(string name, int index);
     
 
     std::vector<Buffer*> m_OpaqueRenderList;
