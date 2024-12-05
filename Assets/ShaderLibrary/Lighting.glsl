@@ -17,7 +17,7 @@ vec3 BilingPhongLight(vec3 normal, vec3 positionWS, vec3 baseColor )
     vec3 viewDir = normalize(CameraPosition.xyz - positionWS);
     vec3 color = baseColor * mainLight.color.xyz;
     vec3 H = normalize(-mainLight.direction.xyz + viewDir);
-    float NdotL = dot(normal, mainLight.direction.xyz) * 0.5 + 0.5;
+    float NdotL = dot(normal, -mainLight.direction.xyz) * 0.5 + 0.5;
     float NdotH = dot(normal, H);
     float spec = pow(max(NdotH, 0.0), 32.0);
     float diff = NdotL;

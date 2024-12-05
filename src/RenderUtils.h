@@ -10,6 +10,21 @@ enum RenderQueue
     PostEffect = 400,
 };
 
+enum RenderTargetAction
+{
+    DontCare = 0,
+    Clear = 1
+};
+
+enum DepthAction
+{
+    OFF = 0,
+    Always = 1,
+    Less = 2,
+    Equal = 3,
+    LessEqual = 4,
+};
+
 struct Buffer
 {
     Buffer();
@@ -21,9 +36,7 @@ struct Buffer
     unsigned int indices;
 
 };
-inline Buffer::Buffer()
-{
-}
+inline Buffer::Buffer(){}
 
 static unsigned int cubeVAO;
 static void SetupCubeMesh()
@@ -124,4 +137,38 @@ static void DrawQuadMesh()
     glBindVertexArray(quadVAO);
     glDrawArrays(GL_TRIANGLES, 0, 6);
     glBindVertexArray(0);
+}
+
+static void SetRenderTarget(GLuint target, RenderTargetAction colorAction, RenderTargetAction depthAction, DepthAction action)
+{
+    glBindFramebuffer(GL_FRAMEBUFFER, target);
+    auto clearFlag = colorAction == RenderTargetAction::Clear ? GL_COLOR_BUFFER_BIT : 0;
+    clearFlag |= depthAction == RenderTargetAction::Clear ? GL_DEPTH_BUFFER_BIT : 0;
+    glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+    glClear(clearFlag);
+    switch (action)
+    {
+    case OFF:
+        glDisable(GL_DEPTH_TEST);
+        break;
+    case Always:
+        glEnable(GL_DEPTH_TEST);
+        glDepthFunc(GL_ALWAYS);
+        break;
+    case Less:
+        glEnable(GL_DEPTH_TEST);
+        glDepthFunc(GL_LESS);
+        break;
+    case Equal:
+        glEnable(GL_DEPTH_TEST);
+        glDepthFunc(GL_EQUAL);
+        break;
+    case LessEqual:
+        glEnable(GL_DEPTH_TEST);
+        glDepthFunc(GL_LEQUAL);
+        break;
+    default:
+        glDisable(GL_DEPTH_TEST);
+        break;
+    }
 }

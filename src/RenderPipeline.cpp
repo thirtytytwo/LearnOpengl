@@ -1,27 +1,20 @@
 ﻿#include "RenderPipeline.h"
 
 #include <glad/glad.h>
+
+#define FORWARD_RENDER 1
+#define DEFFERED_RENDER 0
+
 RenderPipeline* RenderPipeline::m_Instance = nullptr;
+
 
 void RenderPipeline::Setup(Camera &camera, Light &light)
 {
     m_Camera = &camera;
     m_Light = &light;
-    glGenFramebuffers(1, &m_framebuffer);
-    glBindFramebuffer(GL_FRAMEBUFFER, m_framebuffer);
-    
-    glGenTextures(1, &m_colorAttachment);
-    glBindTexture(GL_TEXTURE_2D, m_colorAttachment);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 1920, 1080, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_colorAttachment, 0);
-    
-    glGenRenderbuffers(1, &m_depthAttachment);
-    glBindRenderbuffer(GL_RENDERBUFFER, m_depthAttachment);
-    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, 1920, 1080);
-    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, m_depthAttachment);
 
+    SetupRenderTargets();
+    
     SetupQuadMesh();
     SetupCubeMesh();
 
@@ -62,8 +55,12 @@ void RenderPipeline::EnqueueBuffer(Buffer &buffer, RenderQueue queue)
 
 void RenderPipeline::Render()
 {
+#if FORWARD_RENDER
     DrawOpaque();
-    //DrawTransparent();
+#elif DEFERRED_RENDER
+    DrawOpaqueDeffer();
+#endif
+    DrawTransparent();
     DrawSkybox();
     DrawFinal();
 }
@@ -71,12 +68,6 @@ void RenderPipeline::BeginRender()
 {
     SetupCamera();
     SetupLight();
-    glBindFramebuffer(GL_FRAMEBUFFER, m_framebuffer);
-    glEnable(GL_DEPTH_TEST);
-    glEnable(GL_CULL_FACE);
-    glCullFace(GL_BACK);
-    glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 void RenderPipeline::FinishRender()
 {
@@ -85,18 +76,27 @@ void RenderPipeline::FinishRender()
         buffer->textures.clear();
         glDeleteBuffers(1, buffer->VAO);
     }
+    for (auto& buffer : m_TransparentRenderList)
+    {
+        buffer->textures.clear();
+        glDeleteBuffers(1, buffer->VAO);
+    }
     m_OpaqueRenderList.clear();
-
+    m_TransparentRenderList.clear();
+    
     delete(m_SkyboxTexture);
     delete(m_SkyboxShader);
 
     delete(m_FinalShader);
-    
-    glDeleteFramebuffers(1, &m_framebuffer);
-    glDeleteTextures(1, &m_colorAttachment);
-    glDeleteTextures(1, &m_depthAttachment);
+
+    for (int i = 0; i < 5; i++)
+    {
+        glDeleteTextures(1, &m_ColorAttachments[i]);
+    }
+    glDeleteBuffers(1, &m_DepthAttachment);
 }
 
+//Private
 void RenderPipeline::SetupCamera()
 {
     SetBufferUniform("CameraBuffer", 0);
@@ -143,12 +143,74 @@ void RenderPipeline::SetupLight()
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
 }
 
+void RenderPipeline::SetupRenderTargets()
+{
+    //TODO:后续还有renderscale的配置
+#if FORWARD_RENDER
+    glGenFramebuffers(1, &m_RenderTargetHandles[0]);
+    glBindFramebuffer(GL_FRAMEBUFFER, m_RenderTargetHandles[0]);
+    
+    glGenTextures(1, &m_ColorAttachments[0]);
+    glBindTexture(GL_TEXTURE_2D, m_ColorAttachments[0]);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 1920, 1080, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_ColorAttachments[0], 0);
 
+    glGenRenderbuffers(1, &m_DepthAttachment);
+    glBindRenderbuffer(GL_RENDERBUFFER, m_DepthAttachment);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH32F_STENCIL8, 1920, 1080);
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, m_DepthAttachment);
 
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    
+#elif DEFERRED_RENDER
+    for (int i = 0; i < 5; i++)
+    {
+        //TODO: 不同的RT需要不同的格式
+        glGenTextures(1, &m_ColorAttachments[i]);
+        glBindTexture(GL_TEXTURE_2D, m_ColorAttachments[i]);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 1920, 1080, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    }
+    glGenRenderbuffers(1, &m_DepthAttachment);
+    glBindRenderbuffer(GL_RENDERBUFFER, m_DepthAttachment);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH32F_STENCIL8, 1920, 1080);
+    
+#endif
+    
+}
 
 void RenderPipeline::DrawOpaque()
 {
+    SetRenderTarget(std::move(m_RenderTargetHandles[0]), RenderTargetAction::Clear, RenderTargetAction::Clear, DepthAction::Less);
     for (auto buffer : m_OpaqueRenderList)
+    {
+        buffer->shader->use();
+        
+        buffer->shader->SetWolrd(buffer->worldMatrix);
+        
+        for (int i = 0; i < buffer->textures.size(); i++)
+        {
+            buffer->textures[i]->Active(GL_TEXTURE0 + i);
+            buffer->textures[i]->Bind();
+        }
+        glBindVertexArray(*buffer->VAO);
+        glDrawElements(GL_TRIANGLES, buffer->indices, GL_UNSIGNED_INT, 0);
+    }
+}
+
+void RenderPipeline::DrawOpaqueDeffer()
+{
+
+    
+}
+
+void RenderPipeline::DrawTransparent()
+{
+    SetRenderTarget(std::move(m_RenderTargetHandles[0]), RenderTargetAction::DontCare, RenderTargetAction::DontCare, DepthAction::Less);
+    for (auto buffer : m_TransparentRenderList)
     {
         buffer->shader->use();
         
@@ -165,28 +227,21 @@ void RenderPipeline::DrawOpaque()
 }
 void RenderPipeline::DrawSkybox()
 {
-    glDepthFunc(GL_LEQUAL);
+    SetRenderTarget(std::move(m_RenderTargetHandles[0]), DontCare, DontCare, DepthAction::LessEqual);
     m_SkyboxShader->use();
     
     m_SkyboxShader->SetInt("Skybox", 0);
     m_SkyboxTexture->Active(GL_TEXTURE0);
     m_SkyboxTexture->Bind();
     DrawCubeMesh();
-    glDepthFunc(GL_LESS);
 }
 void RenderPipeline::DrawFinal()
 {
-    //物体已经渲染到指定的framebuffer上，现在需要把framebuffer中的值拷贝到最终的屏幕上
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    glDisable(GL_DEPTH_TEST); // disable depth test so screen-space quad isn't discarded due to depth test.
-    // clear all relevant buffers
-    glClearColor(1.0f, 1.0f, 1.0f, 1.0f); // set clear color to white (not really necessary actually, since we won't be able to see behind the quad anyways)
-    glClear(GL_COLOR_BUFFER_BIT);
+    SetRenderTarget(0, Clear, DontCare, DepthAction::OFF);
 
     m_FinalShader->use();
-    glBindTexture(GL_TEXTURE_2D, m_colorAttachment);
+    glBindTexture(GL_TEXTURE_2D, m_ColorAttachments[0]);
     DrawQuadMesh();
-    glDepthFunc(GL_LESS);
 }
 
 void RenderPipeline::SetBufferUniform(string name, int index)
