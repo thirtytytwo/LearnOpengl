@@ -144,8 +144,11 @@ static void SetRenderTarget(GLuint target, RenderTargetAction colorAction, Rende
     glBindFramebuffer(GL_FRAMEBUFFER, target);
     auto clearFlag = colorAction == RenderTargetAction::Clear ? GL_COLOR_BUFFER_BIT : 0;
     clearFlag |= depthAction == RenderTargetAction::Clear ? GL_DEPTH_BUFFER_BIT : 0;
-    glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
-    glClear(clearFlag);
+    if (clearFlag != 0)
+    {
+        glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+        glClear(clearFlag);   
+    }
     switch (action)
     {
     case OFF:
