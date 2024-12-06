@@ -79,6 +79,7 @@ inline Shader::Shader(std::string shaderName)
 
         unsigned int vertex, fragment;
         // vertex shader
+    
         vertex = glCreateShader(GL_VERTEX_SHADER);
         glShaderSource(vertex, 1, &vShaderCode, NULL);
         glCompileShader(vertex);

@@ -147,6 +147,10 @@
     <Content Include="Assets\Meshes\nanosuit\nanosuit.obj" />
     <Content Include="Assets\ShaderLibrary\Common.glsl" />
     <Content Include="Assets\ShaderLibrary\Lighting.glsl" />
+    <Content Include="Assets\Shader\DefferLit\DefferLitFragment.glsl" />
+    <Content Include="Assets\Shader\DefferLit\DefferLitVertex.glsl" />
+    <Content Include="Assets\Shader\GBuffer\GBufferFragment.glsl" />
+    <Content Include="Assets\Shader\GBuffer\GBufferVertex.glsl" />
     <Content Include="Assets\Shader\Lit\LitFragment.glsl" />
     <Content Include="Assets\Shader\Lit\LitVertex.glsl" />
     <Content Include="Assets\Shader\ResolveToScreen\ResolveToScreenFragment.glsl" />

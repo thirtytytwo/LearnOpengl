@@ -2,8 +2,8 @@
 
 #include <glad/glad.h>
 
-#define FORWARD_RENDER 1
-#define DEFFERED_RENDER 0
+#define FORWARD_RENDER 0
+#define DEFFERED_RENDER 1
 
 RenderPipeline* RenderPipeline::m_Instance = nullptr;
 
@@ -57,7 +57,7 @@ void RenderPipeline::Render()
 {
 #if FORWARD_RENDER
     DrawOpaque();
-#elif DEFERRED_RENDER
+#elif DEFFERED_RENDER
     DrawOpaqueDeffer();
 #endif
     DrawTransparent();
@@ -164,19 +164,55 @@ void RenderPipeline::SetupRenderTargets()
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     
-#elif DEFERRED_RENDER
-    for (int i = 0; i < 5; i++)
-    {
-        //TODO: 不同的RT需要不同的格式
-        glGenTextures(1, &m_ColorAttachments[i]);
-        glBindTexture(GL_TEXTURE_2D, m_ColorAttachments[i]);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 1920, 1080, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    }
+#elif DEFFERED_RENDER
+    //生成主framebuffer
+    glGenFramebuffers(1, &m_RenderTargetHandles[0]);
+    glBindFramebuffer(GL_FRAMEBUFFER, m_RenderTargetHandles[0]);
+
+    glGenTextures(1, &m_ColorAttachments[0]);
+    glBindTexture(GL_TEXTURE_2D, m_ColorAttachments[0]);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 1920, 1080, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_ColorAttachments[0], 0);
+    
     glGenRenderbuffers(1, &m_DepthAttachment);
     glBindRenderbuffer(GL_RENDERBUFFER, m_DepthAttachment);
     glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH32F_STENCIL8, 1920, 1080);
+
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+    //生成GBuffer
+    glGenFramebuffers(1, &m_RenderTargetHandles[1]);
+    glBindFramebuffer(GL_FRAMEBUFFER, m_RenderTargetHandles[1]);
+
+    //position
+    glGenTextures(1, &m_ColorAttachments[1]);
+    glBindTexture(GL_TEXTURE_2D, m_ColorAttachments[1]);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, 1920, 1080, 0, GL_RGB, GL_FLOAT, NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, m_ColorAttachments[1], 0);
+    //normal
+    glGenTextures(1, &m_ColorAttachments[2]);
+    glBindTexture(GL_TEXTURE_2D, m_ColorAttachments[2]);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, 1920, 1080, 0, GL_RGB, GL_FLOAT, NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D, m_ColorAttachments[2], 0);
+    //albedo+specular
+    glGenTextures(1, &m_ColorAttachments[3]);
+    glBindTexture(GL_TEXTURE_2D, m_ColorAttachments[3]);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 1920, 1080, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT3, GL_TEXTURE_2D, m_ColorAttachments[3], 0);
+
+    GLuint attachments[3] = {GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2, GL_COLOR_ATTACHMENT3};
+    glDrawBuffers(3, attachments);
+
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    
     
 #endif
     
@@ -184,6 +220,7 @@ void RenderPipeline::SetupRenderTargets()
 
 void RenderPipeline::DrawOpaque()
 {
+
     SetRenderTarget(std::move(m_RenderTargetHandles[0]), RenderTargetAction::Clear, RenderTargetAction::Clear, DepthAction::Less);
     for (auto buffer : m_OpaqueRenderList)
     {
@@ -203,8 +240,32 @@ void RenderPipeline::DrawOpaque()
 
 void RenderPipeline::DrawOpaqueDeffer()
 {
+    SetRenderTarget(std::move(m_RenderTargetHandles[1]), Clear, DontCare, DepthAction::Less);
+    for (auto buffer : m_OpaqueRenderList)
+    {
+        buffer->shader->use();
+        
+        buffer->shader->SetWolrd(buffer->worldMatrix);
+        
+        for (int i = 0; i < buffer->textures.size(); i++)
+        {
+            buffer->textures[i]->Active(GL_TEXTURE0 + i);
+            buffer->textures[i]->Bind();
+        }
+        glBindVertexArray(*buffer->VAO);
+        glDrawElements(GL_TRIANGLES, buffer->indices, GL_UNSIGNED_INT, 0);
+    }
+    SetRenderTarget(std::move(m_RenderTargetHandles[0]), Clear, DontCare, DepthAction::OFF);
+    Shader DefferLitShader("DefferLit");
+    DefferLitShader.use();
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, m_ColorAttachments[1]);
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, m_ColorAttachments[2]);
+    glActiveTexture(GL_TEXTURE2);
+    glBindTexture(GL_TEXTURE_2D, m_ColorAttachments[3]);
 
-    
+    DrawQuadMesh();
 }
 
 void RenderPipeline::DrawTransparent()

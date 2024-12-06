@@ -175,3 +175,4 @@ static void SetRenderTarget(GLuint target, RenderTargetAction colorAction, Rende
         break;
     }
 }
+

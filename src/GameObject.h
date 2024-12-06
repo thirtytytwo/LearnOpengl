@@ -44,7 +44,7 @@ inline mat4 GameObject::GetWorldMatrix()
 
 inline void GameObject::SetupMeshRenderer(std::string mesh)
 {
-    renderer = new MeshRenderer(mesh);
+    renderer = new MeshRenderer(mesh, "GBuffer");
 }
 
 inline void GameObject::Setup()
