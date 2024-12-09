@@ -5,6 +5,9 @@
 #include "Light.h"
 #include "Material.h"
 
+#define FORWARD_RENDER 0
+#define DEFFERED_RENDER 1
+
 class RenderPipeline
 {
 public:
@@ -58,8 +61,14 @@ private:
     Shader* m_SkyboxShader;
     Texture* m_SkyboxTexture;
 
+
     Shader* m_FinalShader;
 
+#if DEFFERED_RENDER
+    Shader* m_DefferShader;
+#endif
+    
+    
     Camera* m_Camera;
     Light* m_Light;
 

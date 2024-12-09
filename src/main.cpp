@@ -51,27 +51,16 @@ int main()
     }
     
     Light light = Light();
-    GameObject testObject = GameObject(vec3(0.f), vec3(0.0f), vec3(0.5f));
-    testObject.SetupMeshRenderer("nanosuit");
-    testObject.Setup();
-	camera.SetPosition(glm::vec3(0.0f, 5.0f, 3.0f));
+    for (int i = 0; i < 10; ++i)
+    {
+        vec3 position = vec3(i % 5 * 5, 0, i / 5 * 5);
+        GameObject testObject = GameObject(position, vec3(0.0f), vec3(0.5f));
+        testObject.SetupMeshRenderer("nanosuit");
+        testObject.Setup();
+    }
+	camera.SetPosition(glm::vec3(10.f, 10.f, 18.f));
 
     RenderPipeline::GetInstance().Setup(camera, light);
-    //Framebuffer 章节
-    
-    // Shader shader = Shader("ResolveToScreen");
-    // shader.use();
-    // shader.SetInt("screenTexture", 0);
-    // Buffer skyboxBuffer = Buffer();
-    // Material skyboxMaterial = Material(, "Skybox");
-    // skyboxMaterial.Setup(skyboxBuffer);
-    // RenderPipeline::GetInstance().EnqueueBuffer(, Skybox);
-    //
-    // Texture skyboxTexture = Texture("sunshine", Cube);
-    // Buffer skyboxBuffer = Buffer();
-    // Material skyboxMaterial = Material({skyboxTexture}, "Skybox");
-    // skyboxMaterial.Setup(skyboxBuffer);
-    // RenderPipeline::GetInstance().EnqueueBuffer(skyboxBuffer, Skybox);
 
     
     while (!glfwWindowShouldClose(window))

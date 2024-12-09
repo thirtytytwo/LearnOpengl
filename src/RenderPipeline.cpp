@@ -2,9 +2,6 @@
 
 #include <glad/glad.h>
 
-#define FORWARD_RENDER 0
-#define DEFFERED_RENDER 1
-
 RenderPipeline* RenderPipeline::m_Instance = nullptr;
 
 
@@ -32,6 +29,16 @@ void RenderPipeline::Setup(Camera &camera, Light &light)
     m_FinalShader = new Shader("ResolveToScreen");
     m_FinalShader->use();
     m_FinalShader->SetInt("screenTexture", 0);
+
+#if DEFFERED_RENDER
+    m_DefferShader = new Shader("DefferLit");
+    m_DefferShader->use();
+    m_DefferShader->SetInt("GPosition", 0);
+    m_DefferShader->SetInt("GNormal", 1);
+    m_DefferShader->SetInt("GAlbedoSpec", 2);
+    
+#endif
+    
 }
 
 void RenderPipeline::EnqueueBuffer(Buffer &buffer, RenderQueue queue)
@@ -179,7 +186,12 @@ void RenderPipeline::SetupRenderTargets()
     glGenRenderbuffers(1, &m_DepthAttachment);
     glBindRenderbuffer(GL_RENDERBUFFER, m_DepthAttachment);
     glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH32F_STENCIL8, 1920, 1080);
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, m_DepthAttachment);
 
+    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+    {
+        std::cout << "Framebuffer is not complete" << std::endl;
+    }
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
     //生成GBuffer
@@ -211,6 +223,12 @@ void RenderPipeline::SetupRenderTargets()
     GLuint attachments[3] = {GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2, GL_COLOR_ATTACHMENT3};
     glDrawBuffers(3, attachments);
 
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, m_DepthAttachment);
+
+    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+    {
+        std::cout << "Framebuffer is not complete" << std::endl;
+    }
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     
     
@@ -240,7 +258,7 @@ void RenderPipeline::DrawOpaque()
 
 void RenderPipeline::DrawOpaqueDeffer()
 {
-    SetRenderTarget(std::move(m_RenderTargetHandles[1]), Clear, DontCare, DepthAction::Less);
+    SetRenderTarget(std::move(m_RenderTargetHandles[1]), Clear, Clear, DepthAction::Less);
     for (auto buffer : m_OpaqueRenderList)
     {
         buffer->shader->use();
@@ -249,15 +267,14 @@ void RenderPipeline::DrawOpaqueDeffer()
         
         for (int i = 0; i < buffer->textures.size(); i++)
         {
-            buffer->textures[i]->Active(GL_TEXTURE0 + i);
+            buffer->textures[i]->Active(GL_TEXTURE0 + i); 
             buffer->textures[i]->Bind();
         }
         glBindVertexArray(*buffer->VAO);
         glDrawElements(GL_TRIANGLES, buffer->indices, GL_UNSIGNED_INT, 0);
     }
     SetRenderTarget(std::move(m_RenderTargetHandles[0]), Clear, DontCare, DepthAction::OFF);
-    Shader DefferLitShader("DefferLit");
-    DefferLitShader.use();
+    m_DefferShader->use();
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, m_ColorAttachments[1]);
     glActiveTexture(GL_TEXTURE1);
@@ -314,6 +331,12 @@ void RenderPipeline::SetBufferUniform(string name, int index)
     }
     unsigned int uniformBlock = glGetUniformBlockIndex(m_SkyboxShader->ID, name.c_str());
     glUniformBlockBinding(m_SkyboxShader->ID, uniformBlock, index);
+
+#if DEFFERED_RENDER
+    uniformBlock = glGetUniformBlockIndex(m_DefferShader->ID, name.c_str());
+    glUniformBlockBinding(m_DefferShader->ID, uniformBlock, index);
+#endif
+    
 }
 
 
